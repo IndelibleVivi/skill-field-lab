@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "decision_id": "replace-me",
+  "candidate_id": "replace-me",
+  "decision": "DEFER",
+  "basis": "Source facts, local evidence, and clearly marked inference.",
+  "accepted_delta": "Smallest accepted change.",
+  "excluded_delta": "Rejected surrounding machinery.",
+  "evidence_receipts": [],
+  "reopen_condition": "Concrete reason to revisit."
+}

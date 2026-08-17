@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/skill-field-lab/pack.schema.json",
+  "title": "Skill Field Lab pack",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "pack_id", "description", "cases_root", "subjects", "defaults"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "pack_id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "description": {"type": "string", "minLength": 1},
+    "cases_root": {"type": "string", "minLength": 1},
+    "subjects": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["label", "attribution", "overlays"],
+        "properties": {
+          "label": {"type": "string", "minLength": 1},
+          "attribution": {"enum": ["ambient", "repo_scoped"]},
+          "notes": {"type": "string"},
+          "overlays": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["source", "target"],
+              "properties": {
+                "source": {"type": "string", "minLength": 1},
+                "target": {"type": "string", "minLength": 1}
+              }
+            }
+          }
+        }
+      }
+    },
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["adapter", "approval_policy", "network_access", "output_root", "keep_workspace"],
+      "properties": {
+        "adapter": {"const": "codex-exec"},
+        "approval_policy": {"enum": ["untrusted", "on-request", "never"]},
+        "network_access": {"type": "boolean"},
+        "output_root": {"type": "string", "minLength": 1},
+        "keep_workspace": {"type": "boolean"}
+      }
+    },
+    "metadata": {"type": "object"}
+  }
+}

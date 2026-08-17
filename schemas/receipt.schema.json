@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/skill-field-lab/receipt.schema.json",
+  "title": "Content-light skill evidence receipt",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "receipt_type",
+    "created_at",
+    "pack_id",
+    "case_id",
+    "subject_id",
+    "evidence",
+    "outcome",
+    "artifacts"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "receipt_type": {
+      "enum": [
+        "attempt",
+        "observed-import"
+      ]
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "pack_id": {
+      "type": "string"
+    },
+    "case_id": {
+      "type": "string"
+    },
+    "subject_id": {
+      "type": "string"
+    },
+    "evidence": {
+      "type": "object",
+      "required": [
+        "origin",
+        "attribution",
+        "comparison",
+        "verification",
+        "independence",
+        "comparison_capable"
+      ],
+      "properties": {
+        "origin": {
+          "enum": [
+            "observed",
+            "synthetic"
+          ]
+        },
+        "attribution": {
+          "enum": [
+            "ambient",
+            "repo_scoped",
+            "hermetic"
+          ]
+        },
+        "comparison": {
+          "enum": [
+            "unmatched",
+            "single",
+            "matched"
+          ]
+        },
+        "verification": {
+          "enum": [
+            "deterministic",
+            "human",
+            "llm"
+          ]
+        },
+        "independence": {
+          "enum": [
+            "implementer-run",
+            "separate-agent",
+            "external-reviewer"
+          ]
+        },
+        "comparison_capable": {
+          "type": "boolean"
+        },
+        "exclusive_subject_claimed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "outcome": {
+      "type": "string"
+    },
+    "artifacts": {
+      "type": "object"
+    }
+  }
+}

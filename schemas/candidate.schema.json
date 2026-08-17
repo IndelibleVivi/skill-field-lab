@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/skill-field-lab/candidate.schema.json",
+  "title": "External pattern candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "candidate_id", "source", "pinned_ref", "reviewed_files", "review_date", "distilled_pattern", "local_problem", "landing_plane", "decision", "accepted_kernel", "excluded_machinery", "reopen_condition"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "candidate_id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "source": {"type": "string", "minLength": 1},
+    "pinned_ref": {"type": "string", "minLength": 1},
+    "license_note": {"type": "string"},
+    "reviewed_files": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "review_date": {"type": "string"},
+    "distilled_pattern": {"type": "string", "minLength": 1},
+    "local_problem": {"type": "string", "minLength": 1},
+    "landing_plane": {"enum": ["runtime", "eval-maintainer", "packaging", "docs-provenance"]},
+    "decision": {"enum": ["ADOPT", "ADAPT", "REJECT", "DEFER", "ALREADY COVERED"]},
+    "accepted_kernel": {"type": "string"},
+    "excluded_machinery": {"type": "string"},
+    "unresolved_claim_ids": {"type": "array", "items": {"type": "string"}},
+    "reopen_condition": {"type": "string", "minLength": 1}
+  }
+}

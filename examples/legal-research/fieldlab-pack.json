@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "pack_id": "legal-research-example",
+  "description": "A non-DevOps example for source-bounded legal research behavior.",
+  "cases_root": "cases",
+  "subjects": {
+    "legal-source-discipline": {
+      "label": "Primary-authority source discipline",
+      "attribution": "repo_scoped",
+      "overlays": [
+        {
+          "source": "subject-skills",
+          "target": ".agents/skills"
+        }
+      ],
+      "notes": "Demonstrates that core Field Lab contracts do not require source-code edits or Git-specific claims."
+    }
+  },
+  "defaults": {
+    "adapter": "codex-exec",
+    "approval_policy": "never",
+    "network_access": false,
+    "output_root": ".fieldlab",
+    "keep_workspace": false
+  }
+}

@@ -1,0 +1,8 @@
+interface:
+  display_name: "Pattern Intake"
+  short_description: "Adapt external mechanisms without importing the machinery"
+  default_prompt: "Use $pattern-intake to pin this source, distill the narrow mechanism, compare it with the local skill system, and record an evidence-bounded intake decision without starting a live eval."
+policy:
+  products:
+    - CODEX
+  allow_implicit_invocation: true

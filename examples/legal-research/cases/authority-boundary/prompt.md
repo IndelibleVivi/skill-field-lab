@@ -1,0 +1,1 @@
+Using only the authority supplied in `authorities/NP-SC-17.md`, write a short answer in `answer.md` stating whether a late administrative appeal is accepted in the described jurisdiction. Name the jurisdiction and authority identifier. Mark any unresolved point; do not invent cases or use another jurisdiction.

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/skill-field-lab/claim.schema.json",
+  "title": "Falsifiable skill behavior claim",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "claim_id", "subject_id", "statement", "observable", "adjacent_control", "sufficient_evidence"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "claim_id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "subject_id": {"type": "string", "minLength": 1},
+    "candidate_id": {"type": "string"},
+    "statement": {"type": "string", "minLength": 1},
+    "observable": {"type": "string", "minLength": 1},
+    "adjacent_control": {"type": "string", "minLength": 1},
+    "sufficient_evidence": {"type": "string", "minLength": 1},
+    "status": {"enum": ["proposed", "planned", "observed", "verified", "rejected", "inconclusive"]}
+  }
+}

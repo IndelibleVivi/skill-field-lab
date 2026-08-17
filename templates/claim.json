@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "claim_id": "replace-me",
+  "subject_id": "replace-me",
+  "candidate_id": "replace-me",
+  "statement": "One falsifiable behavior change.",
+  "observable": "Artifact or trajectory observation that would support it.",
+  "adjacent_control": "Behavior that must remain intact.",
+  "sufficient_evidence": "Weakest evidence lane that can answer the question.",
+  "status": "proposed"
+}

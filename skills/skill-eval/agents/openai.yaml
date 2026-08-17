@@ -1,0 +1,8 @@
+interface:
+  display_name: "Skill Eval"
+  short_description: "Plan quota-explicit skill behavior evidence"
+  default_prompt: "Use $skill-eval to turn this behavior claim into the smallest defensible no-spend plan. Report invocation cost before any live run."
+policy:
+  products:
+    - CODEX
+  allow_implicit_invocation: false
