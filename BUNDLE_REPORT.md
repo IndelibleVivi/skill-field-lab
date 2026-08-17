@@ -1,8 +1,8 @@
 # Skill Field Lab bundle report
 
 Date: 2026-08-17
-Working version: 0.1.0
-Status: runnable standalone draft; not yet published or integrated into the live Softpowers repository.
+Release version: 0.1.0
+Status: standalone release; integrated as Softpowers' optional evaluation companion.
 
 ## Product decision
 
@@ -73,21 +73,19 @@ Final deterministic suite at handoff: **25 tests passed**.
 
 ## Softpowers migration boundary
 
-The bundle does not modify the connected Softpowers repository. `softpowers-companion/` contains the files and instructions for a later forward-only migration:
-
-1. copy the manifest to the Softpowers root;
-2. validate and selftest without quota;
-3. run the fake-adapter suite;
-4. optionally run one explicitly approved real canary;
-5. retire the embedded `soft-eval` runner and projection only after migration evidence passes.
-
-Historical Softpowers revisions remain untouched.
+Softpowers completed the forward-only migration at commit `4180b49`: the pack
+manifest and retained cases are present, deterministic validation passed, and
+the embedded `soft-eval` runner and projection were retired. No real target
+model was invoked for the migration. Historical Softpowers revisions remain
+untouched; the companion copies in this repository remain reusable fixtures
+and provenance evidence.
 
 ## Deliberate limits
 
-- Working name remains `skill-field-lab`; it is rename-ready.
+- The public name remains `skill-field-lab`; the internal contracts are rename-ready.
 - Local Codex CLI is the only live adapter.
 - Live process containment is POSIX process-group containment, not hostile daemon/cgroup containment.
 - V0.1 supports `read-only` and `workspace-write`; `danger-full-access` is rejected.
 - No LLM grader, cloud dashboard, monitoring, leaderboard, scheduled runs, or automatic publishing.
-- A public license boundary has not been selected. Do not publish the bundle as a licensed release until `LICENSE-TODO.md` is resolved.
+- Functional material is licensed under SUL-1.0; documentation is licensed
+  under CC BY-NC-SA 4.0. See `LICENSING.md` for the path map.

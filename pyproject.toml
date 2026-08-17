@@ -11,6 +11,10 @@ requires-python = ">=3.10"
 authors = [{name = "Faye & Cove"}]
 dependencies = []
 
+[project.urls]
+Repository = "https://github.com/IndelibleVivi/skill-field-lab"
+Issues = "https://github.com/IndelibleVivi/skill-field-lab/issues"
+
 [project.scripts]
 fieldlab = "fieldlab.cli:main"
 

@@ -141,7 +141,12 @@ Windows live execution fails closed in v0.1. A Windows Job Object adapter is req
 
 ## Softpowers
 
-Copy `softpowers-companion/fieldlab-pack.copy-into-softpowers-root.json` to the Softpowers repository root as `fieldlab-pack.json`, and copy or compare the companion case directories under `evals/`. Keep candidates, claims, receipts, and decisions in Softpowers; remove the generic process runner and generated `soft-eval` payload only after the standalone tests and one fake-adapter migration check pass. See `docs/SOFTPOWERS_INTEGRATION.md` and `docs/MIGRATION_FROM_SOFT_EVAL.md`.
+Softpowers completed this migration at commit `4180b49`: its root
+`fieldlab-pack.json` now owns the subject mapping, the three canaries remain in
+Softpowers, and the generic runner plus generated `soft-eval` payload have been
+retired. The copies under `softpowers-companion/` remain reusable fixtures and
+provenance evidence. See `docs/SOFTPOWERS_INTEGRATION.md` and
+`docs/MIGRATION_FROM_SOFT_EVAL.md`.
 
 ## Deliberate limits of v0.1
 
@@ -152,6 +157,19 @@ Copy `softpowers-companion/fieldlab-pack.copy-into-softpowers-root.json` to the 
 - no LLM judge;
 - no claim that repo-scoped isolation is hermetic;
 - no automatic publication, commit, tag, release, or external action;
-- license still requires a maintainer decision before public release.
 
-Public distribution packaging is intentionally deferred; see `docs/PACKAGING.md`.
+## License
+
+Skill Field Lab uses layered licensing:
+
+- functional material—including the Python runtime, controller skills,
+  schemas, scripts, manifests, fixtures, and tests—is licensed under
+  [SUL-1.0](LICENSE);
+- original documentation is licensed under
+  [CC BY-NC-SA 4.0](LICENSE-DOCUMENTATION.md).
+
+See [LICENSING.md](LICENSING.md) for the authoritative path and provenance map.
+
+Codex plugin and package-index distribution are intentionally deferred; the
+v0.1 release surface is the public source repository and its release archive.
+See `docs/PACKAGING.md`.

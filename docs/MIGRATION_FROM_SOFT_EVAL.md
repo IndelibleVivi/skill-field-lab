@@ -1,6 +1,12 @@
 # Migration from Soft Eval
 
-The migration should be forward-only and staged. Do not delete the current runner before the standalone fake-adapter regression passes.
+Status: completed in Softpowers commit `4180b49`. Phases 1–3 and 5 passed
+without a real target-model invocation; the optional live canary in phase 4
+was intentionally not required. The procedure below is retained as the
+forward-only migration and recovery reference.
+
+The migration must be staged. Do not delete an embedded runner before the
+standalone fake-adapter regression passes.
 
 ## Phase 1 — Add the companion manifest
 

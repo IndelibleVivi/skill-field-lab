@@ -8,4 +8,13 @@ The three files-and-Git behavior cases under `softpowers-companion/evals/cases/`
 - `stale-cursor`
 - `spec-chain`
 
-The pattern-intake method was adapted from the same Softpowers revision. No claim is made that the standalone project inherits ownership of unrelated Softpowers material.
+The pattern-intake method was adapted from the same Softpowers revision. At
+that revision, Softpowers used SUL-1.0 for functional material and CC BY-NC-SA
+4.0 for documentation. Both repositories identify Faye as the relevant rights
+holder for the project-original material she controls; the Field Lab license
+does not change earlier Softpowers grants or claim unrelated Softpowers
+material.
+
+The repository links to OpenAI Codex documentation as an external reference.
+It does not vendor or relicense that documentation. The legal-research example
+uses a fictional authority written for the bundle.
