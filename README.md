@@ -18,6 +18,9 @@ capped target-agent canary. A local installation, Git tag, published assets,
 controller discovery in a later task, and owner acceptance remain separate
 observable states.
 
+Architecture maps: [English](docs/ARCHITECTURE.md) ·
+[简体中文](docs/ARCHITECTURE.zh-CN.md).
+
 ## The working model
 
 ```text
@@ -212,7 +215,7 @@ evidence unless the provider exposes stronger runtime identity.
 | `docs/PRODUCT_SPEC_V0.2.md` | Accepted product and acceptance contract |
 | `docs/WORKSPACE_MODEL_V0.2.md` | Source identity, materialization, drift, and write boundaries |
 | `docs/SCHEMA_DELTA_V1_TO_V2.md` | V2 object authority and one-shot migration mapping |
-| `docs/ARCHITECTURE.md` | Controller, workspace, execution, and evidence topology |
+| `docs/ARCHITECTURE.md` / `docs/ARCHITECTURE.zh-CN.md` | Paired Mermaid maps of controller, workspace, execution, evidence, installation, and subject-ownership boundaries |
 | `docs/EVIDENCE_MODEL.md` | Claim ceilings and receipt/review interpretation |
 | `docs/INSTALLATION.md` | Install, upgrade, rollback, uninstall, and doctor |
 | `schemas/v2/` | Active JSON Schemas |

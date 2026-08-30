@@ -1,30 +1,110 @@
 # Architecture
 
+[简体中文](ARCHITECTURE.zh-CN.md)
+
 Status: current v0.2 source contract.
 
-Skill Field Lab is one installed maintainer workbench around independently
-owned local subjects. It has no daemon, registry, background scheduler, or
+This map answers one question: how does Skill Field Lab turn a source study
+into claim-bounded evidence without hiding model spend or taking ownership of
+the subject repository?
+
+The boxes are logical responsibilities, not independently deployed services.
+Skill Field Lab has no daemon, global registry, background scheduler, or
 subject runtime dependency.
 
+## System overview
+
 ```mermaid
-flowchart LR
-  Source[External source] --> Intake[Pattern Intake]
-  Intake -->|closed decision| Decision[Decision record or no-change result]
-  Intake -->|one unresolved claim| Trial[Field Trial controller]
-  Trial -->|existing evidence| Observe[Observed receipt]
-  Trial -->|synthetic evidence needed| Plan[Immutable no-spend plan]
+flowchart TB
+  %% Semantic node IDs are kept identical to the Simplified Chinese sibling.
+  subgraph INSTALLED["User-level installation · derived deployment"]
+    direction LR
+    InstalledSurface["Maintainer-controlled installed surface<br/>transactional app + launcher + controllers<br/>doctor proves bytes + provenance only<br/>≠ discovery · live behavior · owner acceptance"]
+  end
 
-  Lab[External local lab] --> Plan
-  Subject[Independent subject repo] -->|read and pin only| Lab
-  Control[Isolated control] --> Plan
-  Plan -->|live flag and explicit cap| Runner[Codex adapter and protected runner]
-  Runner --> Attempt[Attempt artifacts and immutable receipt]
-  Attempt --> Review[Separate human review]
-  Observe --> Decision
-  Review --> Decision
+  ExternalSource["External mechanism source<br/>pin + inspect; never adopted by default"]
 
-  Lab -->|explicit promote only| Owned[Subject-owned evidence directory]
+  subgraph LAB["Study + external v2 lab · visible Field Lab-owned state"]
+    direction LR
+    PatternIntake["Pattern Intake · Level 0<br/>source study · no target spend"]
+    LabState["Visible schema-v2 lab state<br/>manifest · candidate · claim · optional case<br/>plans · attempts · evidence records"]
+    LaneChoice{"Field Trial · explicit only<br/>weakest sufficient lane?"}
+    ObservedLane[("Source conclusion or observed evidence<br/>claim-bound ordinary-work artifact<br/>no target invocation")]
+
+    PatternIntake -->|unresolved candidate + claim| LabState
+    LabState --> LaneChoice
+    PatternIntake -->|source study is sufficient| ObservedLane
+    LaneChoice -->|ordinary evidence is sufficient| ObservedLane
+  end
+
+  subgraph EXECUTION["Disposable execution boundary · synthetic lane only"]
+    direction LR
+    SyntheticLane["Immutable no-spend plan → explicit live gate<br/>--live · exact cap · authorization · drift re-pin<br/>read/pin subject → disposable workspace · isolated HOME<br/>ordinary worker context → deterministic verification<br/>quiescent immutable receipt; raw artifacts stay in lab"]
+  end
+
+  subgraph EVIDENCE["Evidence and decision authority"]
+    direction LR
+    EvidenceDecision["Immutable observed or synthetic record<br/>human review remains separate + digest-bound<br/>Decision: ADOPT · ADAPT · REJECT<br/>DEFER · ALREADY COVERED"]
+  end
+
+  subgraph SUBJECT["Independent subject repository · subject-owned"]
+    direction LR
+    SubjectRepo["Canonical Skill + cases + docs<br/>subject owns source + release state<br/>and any selected evidence directory"]
+  end
+
+  ExternalSource -->|pin + study| PatternIntake
+  InstalledSurface -->|Pattern Intake controller| PatternIntake
+  InstalledSurface -->|fieldlab CLI + Field Trial controller| LabState
+
+  LaneChoice -->|synthetic evidence is still needed| SyntheticLane
+  ObservedLane --> EvidenceDecision
+  SyntheticLane --> EvidenceDecision
+  EvidenceDecision ==>|promote · only intentional subject write<br/>selected records only| SubjectRepo
+
+  classDef entry fill:#eef2ff,stroke:#4f46e5,color:#111827,stroke-width:1.5px;
+  classDef action fill:#eff6ff,stroke:#2563eb,color:#111827,stroke-width:1.5px;
+  classDef state fill:#ecfdf5,stroke:#059669,color:#111827,stroke-width:1.5px;
+  classDef gate fill:#fff7ed,stroke:#ea580c,color:#111827,stroke-width:2px;
+  classDef execution fill:#f0fdfa,stroke:#0f766e,color:#111827,stroke-width:1.5px;
+  classDef authority fill:#fdf2f8,stroke:#be185d,color:#111827,stroke-width:2px;
+  classDef subject fill:#f5f3ff,stroke:#7c3aed,color:#111827,stroke-width:1.5px;
+
+  class ExternalSource entry;
+  class InstalledSurface,PatternIntake action;
+  class LabState,ObservedLane state;
+  class LaneChoice gate;
+  class SyntheticLane execution;
+  class EvidenceDecision authority;
+  class SubjectRepo subject;
+
+  style INSTALLED fill:#f8fafc,stroke:#64748b,stroke-width:1px;
+  style LAB fill:#f7fee7,stroke:#65a30d,stroke-width:1px;
+  style EXECUTION fill:#f0fdfa,stroke:#0f766e,stroke-width:1px;
+  style EVIDENCE fill:#fdf4ff,stroke:#a21caf,stroke-width:1px;
+  style SUBJECT fill:#faf5ff,stroke:#7c3aed,stroke-width:1px;
 ```
+
+## How to read the map
+
+1. **Study can finish before a lab exists.** Pattern Intake may resolve the
+   question from source evidence and produce a decision or no-change result
+   with no target invocation.
+2. **The lab owns evidence state, not subject source.** `fieldlab.json`, cases,
+   plans, attempts, receipts, reviews, and decisions remain in a visible
+   external v2 lab.
+3. **Planning and execution are different gates.** A plan starts no target
+   model. Synthetic execution additionally requires the saved plan, `--live`,
+   an exact invocation cap, and separate maintainer authorization.
+4. **Evaluator-only material stays out of worker context.** The target receives
+   the ordinary case prompt and disposable workspace; hidden assertions,
+   expected artifacts, and review rubrics remain controller-side.
+5. **Receipts do not absorb later judgment.** Attempt evidence seals only after
+   process-group quiescence. Human review is a separate digest-bound record;
+   Decision alone owns final disposition.
+6. **Subject source enters execution read-only.** The synthetic-lane node calls
+   out its pin-and-materialize boundary. The thick `promote` edge is the only
+   intentional subject write, and it carries selected records only—never the
+   runtime, manifest, plans, or run workspaces.
 
 ## Controller plane
 

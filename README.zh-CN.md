@@ -18,6 +18,9 @@ Subject 仍由它自己的 repo 独立拥有和使用；Field Lab 不会把 runt
 capped 的 target-agent canary。本机 installation、Git tag、published assets、
 后续新 task 的 controller discovery 与 owner acceptance 仍是彼此独立的可观察状态。
 
+架构图：[简体中文](docs/ARCHITECTURE.zh-CN.md) ·
+[English](docs/ARCHITECTURE.md)。
+
 ## 工作模型
 
 ```text
@@ -207,7 +210,7 @@ runtime identity。
 | `docs/PRODUCT_SPEC_V0.2.md` | 已接受的 product / acceptance contract |
 | `docs/WORKSPACE_MODEL_V0.2.md` | source identity、materialization、drift、write boundary |
 | `docs/SCHEMA_DELTA_V1_TO_V2.md` | v2 object authority 与一次性 migration mapping |
-| `docs/ARCHITECTURE.md` | controller、workspace、execution、evidence topology |
+| `docs/ARCHITECTURE.zh-CN.md` / `docs/ARCHITECTURE.md` | 中英两版 Mermaid：controller、workspace、execution、evidence、installation 与 subject ownership boundaries |
 | `docs/EVIDENCE_MODEL.md` | claim ceiling 与 receipt/review interpretation |
 | `docs/INSTALLATION.md` | install、upgrade、rollback、uninstall、doctor |
 | `schemas/v2/` | active JSON Schemas |

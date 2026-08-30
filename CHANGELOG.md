@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Added paired English and Simplified Chinese Mermaid architecture maps that
+  make the live-spend gate, worker context ceiling, evidence authority,
+  installation proof ceiling, and sole subject-write path explicit.
+
 ## 0.2.0 — 2026-08-30
 
 - Reframed Field Lab as one local maintainer workbench with Level 0 intake,
