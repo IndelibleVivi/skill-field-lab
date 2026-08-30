@@ -47,22 +47,53 @@ target-subject Git ref, model, effort, command counts, and plan counts were not
 retained; there is no standalone raw event trace; installed runtime and owner
 acceptance were not observed.
 
-It must therefore not be relabelled as a Field Lab v2 synthetic receipt,
-deterministic trace verification, matched comparison, or provider-proven model
-identity. A screened v2 observed receipt may bind its digest to a narrow claim,
-while preserving those fields as unknown. Until that screened record is
-created and validated, the v0.2 real-receipt release gate remains open.
+It has not been relabelled as a Field Lab v2 synthetic receipt, deterministic
+trace verification, matched comparison, or provider-proven model identity. It
+remains a separate observed-evidence surface with the unknowns above.
+
+## Controlled v0.2 release receipt
+
+On 2026-08-30, a fresh private external v2 lab migrated the dated source pack,
+validated it, and self-tested all six cases before any target invocation. It
+then saved and inspected run `rot-ac10-v020` with exactly this matrix:
+
+- case `source-artifact-split`, current-Skill snapshot, canary, repeat one;
+- one target invocation, zero LLM graders, no retry or resume;
+- requested `gpt-5.6-sol` / `high` as caller-selection evidence only;
+- approval `never`, workspace-write sandbox, and network disabled.
+
+Exactly one target invocation ran and passed. The target received the ordinary
+case prompt, not expected artifacts or evaluator assertions. After worker exit,
+deterministic verification confirmed that the source-only test stayed green,
+the manifest-selected `dist/cli.py` printed `artifact-v1`, and `AUDIT.md` named
+the `artifact-v1` / `artifact-v2` identity split plus a not-ready operator
+handoff decision. Only `AUDIT.md` changed. The retained trace was valid and
+complete with five command executions, zero plan updates, and zero subagent
+events. The process exited zero, became quiescent without orphan descendants,
+and its disposable workspace was removed.
+
+The immutable attempt receipt SHA-256 is
+`28be5f49de1bcf9de8c49be1fbf9027787c145ed6babf9b28cd2c6cc2a17563e`.
+A separate `implementer-run` human review, SHA-256
+`8837beaf0a928aa534d259af30ed49536fe6a1f92decc1d2b3f6d11d03301b87`,
+judged only the pinned synthetic false-green claim supported. The receipt does
+not claim provider-resolved model identity or exclusive subject causality.
+
+Raw stderr retained host-startup warnings about shortened skills descriptions
+and unavailable MCP OAuth. The selected ROT Skill itself was read in full, the
+target used neither MCP nor network, deterministic verification passed, and
+the warnings are not promoted into evidence claims.
+
+Before and after the run, the canonical subject remained at the source identity
+above with a clean worktree. Raw trace, stderr, absolute local paths, and local
+whole-checkout digests remain outside Git.
 
 ## Evidence ceiling
 
-A fresh disposable integration on 2026-08-30 migrated and validated the dated
-source pack, self-tested all six discovered cases, and generated one explicit
-`source-artifact-split` canary plan with one target invocation and zero LLM
-graders. The plan was not run. Before/after whole-checkout digests were equal;
-HEAD stayed at the identity above and Git stayed clean. The local digest value
-is not published because it also covered ignored machine-local state.
-
-Disposable migration plus plan validation proves cross-subject operation and
-zero subject writes. The published forward receipt supports only the two
-public synthetic repository shapes and the boundaries it names. Neither fact
-alone proves live Field Lab execution or general Repo Truth Audit behavior.
+The controlled receipt supports one synthetic public repository shape under
+the pinned prompt, case, subject snapshot, executable, permissions, and
+assertions. The separate review adds a human claim ceiling, not independence.
+It does not prove installed discovery, activated runtime, arbitrary-repository
+behavior, owner acceptance, matched superiority, or longitudinal reliability.
+The older public forward receipt continues to support only the two public
+synthetic shapes and boundaries it names.

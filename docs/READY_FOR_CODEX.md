@@ -1,6 +1,6 @@
 # Source readiness
 
-Status: v0.2 implementation closure surface; revise with final verification.
+Status: v0.2.0 release source verified on 2026-08-30.
 
 The current source is intended to be ready when all of these are freshly true:
 
@@ -13,10 +13,14 @@ The current source is intended to be ready when all of these are freshly true:
 - bundled v2 examples validate and self-test with zero target invocations;
 - real Softpowers and Repository Operational Truth Audit integrations are
   exercised in disposable external labs without changing either subject repo;
+- one owner-authorized ROT `source-artifact-split` canary runs from a saved,
+  one-invocation plan and closes its pinned claim with an immutable receipt plus
+  a separate digest-bound human review;
 - documentation and manifests describe only current commands and boundaries;
 - the source diff passes `git diff --check`; and
 - a transactional user install reports matching source/controller identities.
 
-Source-ready does not mean tagged, released, installed in every environment,
-discovered by a new Codex turn, or accepted through a real owner-controlled
-live trial. Those states are reported separately.
+This file records source and release-acceptance readiness. It does not infer
+remote tag/asset presence, installation in every environment, automatic
+controller discovery in a new Codex task, or owner acceptance; those states
+are read back and reported separately.

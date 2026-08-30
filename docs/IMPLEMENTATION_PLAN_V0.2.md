@@ -1,6 +1,6 @@
 # Skill Field Lab v0.2 implementation plan
 
-Status: implementation verified; external release gate open
+Status: implementation and release acceptance verified
 
 Spec authority: [PRODUCT_SPEC_V0.2.md](PRODUCT_SPEC_V0.2.md), accepted
 2026-08-30
@@ -44,13 +44,16 @@ contract freeze
 | AC-06–AC-07 | matched control plan and drift rejection | plan/runner | plan plus fake-adapter live-boundary tests | verified |
 | AC-08 | process containment unchanged | process/verify | real descendant-process suite | verified |
 | AC-09 | one-shot v1 migration and receipt | migration-only reader | real Softpowers migration and nine-case selftest in disposable lab | verified |
-| AC-10 | one real ROT Audit controlled receipt before release | external live acceptance | saved plan + owner-authorized capped run | not verified; release gate open |
+| AC-10 | one real ROT Audit controlled receipt before release | external live acceptance | one-invocation saved plan + deterministic receipt + digest-bound human review | verified |
 
-`AC-10` remains a release gate, not an implementation shortcut. The existing
-ROT public forward receipt lacks the v2 attempt identity and raw trace required
-to close it. A new target invocation needs an exact saved plan, selected case,
-model/effort, and invocation cap; the current build request did not choose that
-matrix or authorize spend.
+`AC-10` closed on 2026-08-30 with run `rot-ac10-v020`: one
+`source-artifact-split` canary, repeat one, one target invocation, zero graders,
+requested `gpt-5.6-sol` / `high`, network disabled, no retry, a passing
+deterministic receipt, and a separate `implementer-run` human review. Its claim
+ceiling is the pinned synthetic fixture only; actual provider model identity,
+installed/runtime behavior, arbitrary repositories, owner acceptance,
+exclusive causality, comparison superiority, and longitudinal reliability are
+not acceptance claims.
 
 ## Execution tranches
 
@@ -65,8 +68,8 @@ matrix or authorize spend.
 5. **Operations** — init, observe, promote, doctor, unified transactional
    installer, retired legacy aliases, and controller updates.
 6. **Integration and closure** — examples, Softpowers/ROT notes, public docs,
-   validation, user-level install verification, commit, and push. Tag/release
-   remain a separate gate.
+   validation, user-level install verification, controlled AC-10 live receipt,
+   commit, push, and separate tag/release publication read-back.
 
 ## Scope and order deltas
 
@@ -81,7 +84,7 @@ accepted v0.2 outcome.
 
 ## Full acceptance
 
-Every non-external ledger row is verified, so v0.2 implementation source is
-complete. Release readiness still requires AC-10 and fresh public release
-checks. The installed copy, Git commit, pushed branch, tag, release, and live
-subject receipt remain separate states.
+Every ledger row is verified, so v0.2 implementation and release acceptance are
+complete. The installed copy, Git commit, pushed branch, tag, GitHub Release,
+fresh-task controller discovery, and owner acceptance remain separate states
+and must be reported from their own evidence surfaces.

@@ -4,8 +4,9 @@ Date: 2026-08-30
 
 Source version: 0.2.0
 
-Status: source-complete candidate; installed for the owner; not tagged or
-released.
+Status: v0.2.0 implementation and release acceptance complete; installed for
+the owner. Git tag, GitHub Release, later-task controller discovery, and owner
+acceptance remain separate read-backs.
 
 ## Product decision
 
@@ -72,8 +73,10 @@ ran **46 tests**. Coverage includes:
 - safe v1 migration, promotion boundaries, schema syntax, adapter registry,
   symlink confinement, and raw trace preservation.
 
-All synthetic runner exercises used fake adapters. **Target-agent invocations:
-0. LLM-grader invocations: 0.**
+All repository test-suite runner exercises used fake adapters.
+**Target-agent invocations during deterministic bundle checks: 0.
+LLM-grader invocations: 0.** The separately authorized live release acceptance
+is reported below and is not hidden inside the test count.
 
 The same 46-test suite also passed under isolated Python 3.10 and 3.12
 interpreters. An independent Draft 2020-12 metaschema check validated all nine
@@ -108,19 +111,48 @@ Installed bytes and validation prove installation integrity; automatic
 discovery in a later fresh Codex task remains a separate owner-observation
 boundary.
 
+## Controlled live release acceptance
+
+On 2026-08-30, the installed launcher migrated a dated Repository Operational
+Truth Audit v1 pack into a private external v2 lab, validated it, and self-tested
+all six cases without invoking a target. It then saved and fully inspected one
+immutable `source-artifact-split` canary plan:
+
+- run ID `rot-ac10-v020`, one workspace-scoped Skill subject, repeat one;
+- one target invocation and zero LLM graders;
+- requested `gpt-5.6-sol` with `high` reasoning effort, recorded as explicit
+  caller selection rather than provider-proven actual identity;
+- approval `never`, workspace-write sandbox, network disabled, disposable
+  workspace, and no retry or resume authority.
+
+Exactly one target invocation ran. The attempt exited zero in 85.041 seconds,
+the process group became quiescent with no orphan descendants, and the
+disposable workspace was removed. Deterministic verification passed all
+workspace, command, and trace assertions: the source check remained green,
+the manifest-selected `dist/cli.py` printed `artifact-v1`, the report named
+the `artifact-v1` / `artifact-v2` split and a not-ready handoff decision, only
+`AUDIT.md` changed, and the trace contained five command executions, zero plan
+updates, and zero subagent events.
+
+The immutable attempt receipt SHA-256 is
+`28be5f49de1bcf9de8c49be1fbf9027787c145ed6babf9b28cd2c6cc2a17563e`.
+A separate `implementer-run` human review, SHA-256
+`8837beaf0a928aa534d259af30ed49536fe6a1f92decc1d2b3f6d11d03301b87`,
+judged the narrow pinned synthetic claim supported. Raw trace, stderr,
+workspace details, and private paths remain outside Git.
+
 ## Acceptance state
 
 - AC-01 through AC-09: verified by the installed cross-subject exercise,
   controller inspection/validation, v2 unit and integration tests, process
   regressions, and the real one-shot Softpowers migration.
-- AC-10: **not verified**. The existing public ROT forward receipt is useful
-  observed evidence but lacks the target identity, requested model/effort,
-  saved plan, invocation accounting, and raw trace required for a v2 controlled
-  attempt. It has not been relabelled.
+- AC-10: **verified** by the one-invocation controlled ROT canary and its
+  digest-bound human ceiling review. The older public ROT forward receipt
+  remains separate observed evidence and has not been relabelled.
 
-AC-10 remains the release gate. A real controlled ROT attempt requires an
-owner-selected case, model, effort, saved plan, and exact invocation cap. No
-tag or release is created while that gate is open.
+All v0.2 product acceptance rows are closed. Remote tag/release presence is a
+publication read-back from the exact release commit, not something inferred
+from this source report.
 
 ## Deliberate limits
 

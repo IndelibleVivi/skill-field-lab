@@ -14,8 +14,9 @@ Skill Field Lab 是一套 local maintainer workbench：用来研究外部 agent 
 Subject 仍由它自己的 repo 独立拥有和使用；Field Lab 不会把 runtime 复制进去、
 替它安装 Skill，也不会让它反过来依赖 Field Lab。
 
-当前 source contract：**0.2.0**。Source complete、本机 installed、真实
-target-agent receipt、Git tag 和 published release 是五个不同事实。
+当前 release contract：**0.2.0**。它的 source acceptance 包含一次真实、严格
+capped 的 target-agent canary。本机 installation、Git tag、published assets、
+后续新 task 的 controller discovery 与 owner acceptance 仍是彼此独立的可观察状态。
 
 ## 工作模型
 
@@ -216,6 +217,19 @@ runtime identity。
 
 Softpowers 与 Repository Operational Truth Audit 都保持独立。它们自己的 repo
 拥有 Skill 和 cases；Field Lab 只保存 integration note 与有边界的 evidence。
+
+## V0.2 release evidence
+
+2026-08-30，installed v0.2 launcher 对 Repository Operational Truth Audit 的
+snapshot 运行了一次显式 `source-artifact-split` canary：一次 target
+invocation、零 LLM grader、requested `gpt-5.6-sol` / `high`、network disabled，
+且没有 retry。Deterministic receipt 通过，另有一份 implementer-run human
+review，只接受 pinned synthetic false-green claim。
+
+它不证明 provider-resolved model identity、exclusive causality、subject 的
+installed / activated behavior、任意 repo、owner acceptance、comparison
+superiority 或 longitudinal reliability。详见 [bundle report](BUNDLE_REPORT.md)
+与经过筛选的 [case study](case-studies/repository-operational-truth-audit.md)。
 
 ## 开发验证
 

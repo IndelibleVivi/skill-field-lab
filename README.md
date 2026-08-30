@@ -13,9 +13,10 @@ local subject. The subject remains independently owned and usable: Field Lab
 does not copy its runtime into subject repositories, install subjects, or make
 them depend on this project.
 
-Current source contract: **0.2.0**. Source completeness, a local installation,
-a real target-agent receipt, a Git tag, and a published release are separate
-facts.
+Current release contract: **0.2.0**. Its source acceptance includes one real,
+capped target-agent canary. A local installation, Git tag, published assets,
+controller discovery in a later task, and owner acceptance remain separate
+observable states.
 
 ## The working model
 
@@ -222,6 +223,21 @@ evidence unless the provider exposes stronger runtime identity.
 Softpowers and Repository Operational Truth Audit remain independent subjects.
 Their own repositories own their Skills and cases; Field Lab stores only
 integration notes and bounded evidence.
+
+## V0.2 release evidence
+
+On 2026-08-30, the installed v0.2 launcher ran one explicit
+`source-artifact-split` canary against a snapshot of Repository Operational
+Truth Audit: one target invocation, zero LLM graders, requested
+`gpt-5.6-sol` / `high`, network disabled, and no retry. The deterministic
+receipt passed and a separate implementer review accepted only the pinned
+synthetic false-green claim.
+
+This does not prove provider-resolved model identity, exclusive causality,
+installed or activated subject behavior, arbitrary repositories, owner
+acceptance, comparison superiority, or longitudinal reliability. See the
+[bundle report](BUNDLE_REPORT.md) and the screened
+[case study](case-studies/repository-operational-truth-audit.md).
 
 ## Development verification
 

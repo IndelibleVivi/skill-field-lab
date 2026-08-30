@@ -8,15 +8,15 @@ Result: PASS
 - Python package compilation: PASS
 - examples/demo/fieldlab.json validate + selftest: PASS
 - examples/legal-research/fieldlab.json validate + selftest: PASS
-- unittest discovery: 46 tests passed in 16.933s
-- target-agent invocations: 0
+- unittest discovery: 46 tests passed in 17.727s
+- target-agent invocations during bundle check: 0
 - LLM-grader invocations: 0
 
 CROSS-VERSION SUITES
 
 - Python 3.10: 46 tests passed in 16.726s
 - Python 3.12: 46 tests passed in 16.352s
-- Python 3.13 host bundle check: 46 tests passed in 16.933s
+- Python 3.13 host bundle check: 46 tests passed in 17.727s
 
 JSON SCHEMA CHECK
 
@@ -60,6 +60,34 @@ INSTALLED REAL-SUBJECT INTEGRATION
 - both source HEAD/status identities unchanged: PASS
 - real target plans executed: 0
 
+CONTROLLED LIVE RELEASE ACCEPTANCE
+
+Command boundary: installed fieldlab run on saved plan rot-ac10-v020 with
+--live --max-invocations 1
+Result: PASS
+
+- case: source-artifact-split
+- subject scope: workspace-scoped
+- requested selection: gpt-5.6-sol / high; actual provider model not claimed
+- repeat: 1
+- target-agent invocations: 1
+- LLM-grader invocations: 0
+- approval: never
+- network access: false
+- retry/resume: none
+- process: exit 0; 85.041s; quiescent; no timeout; no orphan descendants
+- changed files: AUDIT.md only
+- trace: 5 command executions; 0 plan updates; 0 subagent events
+- deterministic result: source check PASS; selected dist/cli.py printed
+  artifact-v1; report identified artifact-v1/artifact-v2 split and not-ready
+  handoff decision
+- immutable receipt SHA-256:
+  28be5f49de1bcf9de8c49be1fbf9027787c145ed6babf9b28cd2c6cc2a17563e
+- digest-bound implementer review: supported within the pinned synthetic claim
+  ceiling; review SHA-256:
+  8837beaf0a928aa534d259af30ed49536fe6a1f92decc1d2b3f6d11d03301b87
+- canonical ROT source HEAD/status after run: unchanged and clean
+
 CONTROLLER VALIDATION
 
 - installed pattern-intake: Skill is valid
@@ -67,9 +95,11 @@ CONTROLLER VALIDATION
 
 NOT VERIFIED
 
-- AC-10 real controlled Repository Operational Truth Audit attempt
 - automatic controller discovery in a later fresh Codex task
-- tag/release/publication
+- provider-resolved actual model identity or exclusive subject causality
+- installed/activated ROT behavior, arbitrary repositories, owner acceptance,
+  comparison superiority, or longitudinal reliability
 
-The source candidate is not presented as a released v0.2 while AC-10 remains
-open.
+The v0.2 release source satisfies AC-10. Git tag and GitHub Release publication
+are separate external operations performed from, and read back against, the
+exact release commit.

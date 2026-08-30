@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.0 — Unreleased
+## 0.2.0 — 2026-08-30
 
 - Reframed Field Lab as one local maintainer workbench with Level 0 intake,
   Level 1 external labs, and explicit Level 2 evidence promotion.
@@ -24,6 +24,11 @@
   top-level Softpowers functional copy in favor of source-backed case studies.
 - Preserved the process containment kernel and expanded fake-adapter, drift,
   installer, migration, review, and final-response regressions.
+- Closed release acceptance with one owner-authorized, one-invocation
+  Repository Operational Truth Audit `source-artifact-split` canary plus a
+  separate digest-bound human ceiling review. The receipt supports only the
+  pinned synthetic fixture claim; it does not establish installed/runtime or
+  arbitrary-repository behavior.
 
 ## 0.1.0 — 2026-08-17
 
