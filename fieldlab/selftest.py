@@ -4,7 +4,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from .contracts import load_cases, load_pack
+from .contracts import load_cases, load_lab
 from .errors import ConfigError
 from .verify import evaluate_file_assertions
 from .workspace import apply_expected, prepare_workspace
@@ -14,18 +14,34 @@ def _failed(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [result for result in results if not result["passed"]]
 
 
-def selftest_pack(pack_path: Path) -> dict[str, Any]:
-    pack, _, cases_root = load_pack(pack_path)
+def selftest_lab(manifest_path: Path, case_ids: list[str] | None = None) -> dict[str, Any]:
+    lab, lab_root, cases_root = load_lab(manifest_path)
     cases = load_cases(cases_root)
+    selected = list(dict.fromkeys(case_ids or list(cases)))
+    unknown = sorted(set(selected) - set(cases))
+    if unknown:
+        raise ConfigError(f"unknown cases: {', '.join(unknown)}")
     results: list[dict[str, Any]] = []
-    with tempfile.TemporaryDirectory(prefix="fieldlab-pack-selftest-") as raw:
+    with tempfile.TemporaryDirectory(prefix="fieldlab-selftest-") as raw:
         root = Path(raw)
-        for case_id, (case_dir, case) in cases.items():
+        for case_id in selected:
+            case_dir, case = cases[case_id]
+            expected = case_dir / "expected"
+            if not expected.is_dir() or not any(path.is_file() for path in expected.rglob("*")):
+                results.append(
+                    {
+                        "case_id": case_id,
+                        "oracle_status": "not-applicable",
+                        "fixture_failed_assertions": 0,
+                        "expected_assertions_passed": 0,
+                    }
+                )
+                continue
             before_workspace = root / case_id / "before"
             prepare_workspace(
                 case_dir=case_dir,
-                subject={"overlays": []},
-                pack_dir=case_dir,
+                subject={"kind": "control"},
+                lab_root=lab_root,
                 workspace=before_workspace,
             )
             before = evaluate_file_assertions(
@@ -41,11 +57,11 @@ def selftest_pack(pack_path: Path) -> dict[str, Any]:
             expected_workspace = root / case_id / "expected"
             prepare_workspace(
                 case_dir=case_dir,
-                subject={"overlays": []},
-                pack_dir=case_dir,
+                subject={"kind": "control"},
+                lab_root=lab_root,
                 workspace=expected_workspace,
             )
-            apply_expected(case_dir / "expected", expected_workspace)
+            apply_expected(expected, expected_workspace)
             after = evaluate_file_assertions(
                 case,
                 expected_workspace,
@@ -57,12 +73,13 @@ def selftest_pack(pack_path: Path) -> dict[str, Any]:
             results.append(
                 {
                     "case_id": case_id,
+                    "oracle_status": "credible",
                     "fixture_failed_assertions": len(_failed(before)),
                     "expected_assertions_passed": len(after),
                 }
             )
     return {
-        "pack_id": pack["pack_id"],
+        "lab_id": lab["lab_id"],
         "cases": results,
         "target_agent_invocations": 0,
     }

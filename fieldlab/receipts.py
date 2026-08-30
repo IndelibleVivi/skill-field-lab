@@ -3,41 +3,56 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from .io import content_light_artifacts, sha256_file, utc_now
+from .errors import ConfigError
+from .io import content_light_artifacts, read_json, sha256_file, utc_now
+from .subjects import declared_subject_scope
+
+
+ATTEMPT_OUTCOMES = {
+    "pass", "fail", "error", "timeout", "termination-failure", "inconclusive"
+}
+CLAIM_ASSESSMENTS = {"supported", "not-supported", "inconclusive"}
+REVIEW_INDEPENDENCE = {"implementer-run", "separate-agent", "external-reviewer"}
 
 
 def synthetic_receipt(
     *,
     run_id: str,
     attempt_id: str,
-    pack_id: str,
+    lab_id: str,
     case_id: str,
+    claim_ids: list[str],
     subject_id: str,
     subject: dict[str, Any],
     mode: str,
     comparison_capable: bool,
     identity_sha256: str,
-    input_identity: dict[str, str],
+    input_identity: dict[str, Any],
     execution: dict[str, Any],
     process: dict[str, Any],
     outcome: str,
     verification: dict[str, Any],
     attempt_dir: Path,
 ) -> dict[str, Any]:
+    if outcome not in ATTEMPT_OUTCOMES:
+        raise ConfigError(f"unsupported attempt outcome: {outcome}")
+    subject_scope = declared_subject_scope(subject)
+    human_requirements = list(verification.get("human_review_requirements", []))
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "receipt_type": "attempt",
         "created_at": utc_now(),
         "run_id": run_id,
         "attempt_id": attempt_id,
-        "pack_id": pack_id,
+        "lab_id": lab_id,
         "case_id": case_id,
+        "claim_ids": claim_ids,
         "subject_id": subject_id,
         "evidence": {
             "origin": "synthetic",
-            "attribution": subject["attribution"],
+            "subject_scope": subject_scope,
             "comparison": "matched" if mode == "matched" else "single",
-            "verification": "deterministic",
+            "verification_methods": ["deterministic"],
             "independence": "implementer-run",
             "comparison_capable": comparison_capable,
             "exclusive_subject_claimed": False,
@@ -54,8 +69,8 @@ def synthetic_receipt(
             "sandbox": execution["sandbox"],
             "approval_policy": execution["approval_policy"],
             "network_access": execution["network_access"],
-            "user_home_isolated": subject["attribution"] == "repo_scoped",
-            "user_config_ignored": subject["attribution"] == "repo_scoped",
+            "user_home_isolated": True,
+            "user_config_ignored": True,
             "quiescent": process["quiescent"],
             "termination_reason": process["termination_reason"],
             "orphan_descendants": process["orphan_descendants"],
@@ -65,49 +80,59 @@ def synthetic_receipt(
             "passed": verification.get("passed", False),
             "changed_files": verification.get("changed_files", []),
             "usage": verification.get("trace_summary", {}).get("usage"),
+            "human_review": {
+                "required": bool(human_requirements),
+                "requirements": human_requirements,
+                "status": "pending" if human_requirements else "not-required",
+            },
         },
         "artifacts": content_light_artifacts(
             attempt_dir,
             [
-                "case.json",
-                "prompt.md",
-                "trace.jsonl",
-                "stderr.log",
-                "final-output.md",
-                "diff.patch",
-                "verification.json",
-                "metadata.json",
+                "case.json", "prompt.md", "trace.jsonl", "stderr.log",
+                "final-output.md", "diff.patch", "verification.json", "metadata.json",
             ],
         ),
     }
 
 
-def observed_receipt(
+def observed_receipt_v2(
     *,
-    pack_id: str,
-    case_id: str,
+    lab_id: str,
+    claim_ids: list[str],
+    case_id: str | None,
     subject_id: str,
     subject: dict[str, Any],
-    outcome: str,
+    assessment: str,
     artifacts: dict[str, Path],
     note: str,
 ) -> dict[str, Any]:
-    return {
-        "schema_version": 1,
-        "receipt_type": "observed-import",
+    if not claim_ids:
+        raise ConfigError("observed evidence must bind at least one claim")
+    if assessment not in CLAIM_ASSESSMENTS:
+        raise ConfigError(f"unsupported claim assessment: {assessment}")
+    outcome = {
+        "supported": "pass",
+        "not-supported": "fail",
+        "inconclusive": "inconclusive",
+    }[assessment]
+    receipt: dict[str, Any] = {
+        "schema_version": 2,
+        "receipt_type": "observed",
         "created_at": utc_now(),
-        "pack_id": pack_id,
-        "case_id": case_id,
+        "lab_id": lab_id,
+        "claim_ids": claim_ids,
         "subject_id": subject_id,
         "evidence": {
             "origin": "observed",
-            "attribution": subject["attribution"],
+            "subject_scope": declared_subject_scope(subject),
             "comparison": "unmatched",
-            "verification": "human",
+            "verification_methods": ["human"],
             "independence": "implementer-run",
             "comparison_capable": False,
             "exclusive_subject_claimed": False,
         },
+        "claim_assessment": assessment,
         "outcome": outcome,
         "review_note": note,
         "artifacts": {
@@ -115,7 +140,43 @@ def observed_receipt(
             for name, path in sorted(artifacts.items())
         },
         "claims": {
-            "target_agent_invoked_by_import": False,
+            "target_agent_invoked_by_observe": False,
             "controlled_comparison": False,
         },
+    }
+    if case_id is not None:
+        receipt["case_id"] = case_id
+    return receipt
+
+
+def human_review_record(
+    *,
+    review_id: str,
+    receipt_path: Path,
+    independence: str,
+    judgment: str,
+    rationale: str,
+    requirement_outcomes: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    if independence not in REVIEW_INDEPENDENCE:
+        raise ConfigError(f"unsupported reviewer independence: {independence}")
+    if judgment not in CLAIM_ASSESSMENTS:
+        raise ConfigError(f"unsupported review judgment: {judgment}")
+    receipt_path = receipt_path.expanduser().resolve()
+    receipt = read_json(receipt_path)
+    if receipt.get("schema_version") != 2:
+        raise ConfigError("human review requires a schema-v2 receipt")
+    return {
+        "schema_version": 2,
+        "review_id": review_id,
+        "created_at": utc_now(),
+        "receipt": {
+            "path": str(receipt_path),
+            "sha256": sha256_file(receipt_path),
+        },
+        "method": "human",
+        "independence": independence,
+        "judgment": judgment,
+        "rationale": rationale,
+        "requirement_outcomes": requirement_outcomes or {},
     }

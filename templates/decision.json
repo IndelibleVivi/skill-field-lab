@@ -1,11 +1,13 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "decision_id": "replace-me",
   "candidate_id": "replace-me",
   "decision": "DEFER",
-  "basis": "Source facts, local evidence, and clearly marked inference.",
-  "accepted_delta": "Smallest accepted change.",
-  "excluded_delta": "Rejected surrounding machinery.",
-  "evidence_receipts": [],
+  "rationale": "Source facts, local evidence, and clearly marked inference.",
+  "accepted_kernel": "Smallest accepted mechanism.",
+  "excluded_machinery": "Rejected surrounding machinery.",
+  "evidence_references": [],
+  "landing_plane": "eval-maintainer",
+  "local_delta": "Concrete local change, or an empty string for no change.",
   "reopen_condition": "Concrete reason to revisit."
 }

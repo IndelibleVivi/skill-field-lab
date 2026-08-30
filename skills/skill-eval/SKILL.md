@@ -1,9 +1,9 @@
 ---
 name: skill-eval
-description: "Design or run a minimal evidence plan for one concrete reusable-agent behavior claim. Use explicitly for skill canaries, matched comparisons, release evidence, routing investigations, or importing real dogfood. Keep evaluator instructions outside the target worker context. Loading this skill grants analysis only; live target-agent execution requires an explicit saved plan, --live, and an invocation cap."
+description: "Design the weakest sufficient evidence path for one unresolved reusable-agent behavior claim. Use explicitly for ordinary-work evidence, bounded canaries, matched controls, release evidence, or routing investigations. Existing work comes first. Live execution requires a saved plan, --live, and an explicit invocation cap."
 ---
 
-# Skill Eval
+# Field Trial
 
 Evaluate one falsifiable behavior claim. Do not assign a general score to a skill or turn ordinary repository work into a mandatory benchmark.
 
@@ -14,7 +14,7 @@ The controller may inspect candidates, claims, assertions, and expected outcomes
 ## Select the weakest sufficient lane
 
 1. **Inspect** — reason from source and deterministic state; no additional target invocation.
-2. **Import dogfood** — hash existing trace, diff, tests, or review as observed unmatched evidence.
+2. **Observe ordinary work** — bind an existing trace, diff, test result, or review directly to the claim; a synthetic case is optional.
 3. **Canary** — one subject and the smallest synthetic case.
 4. **Matched** — multiple subjects with the same prompt, fixture, model, effort, permissions, and repeats.
 
@@ -22,7 +22,7 @@ Use the evidence vocabulary in `references/evidence-model.md`.
 
 ## Validate the case before spending
 
-Use `fieldlab validate` for contracts and `fieldlab selftest-pack` when the case carries an `expected/` deterministic oracle. The unresolved fixture must fail and the expected overlay must pass. These checks may run repository-owned command assertions but start no target model.
+Use `fieldlab validate` for contracts and `fieldlab selftest` when the case carries an `expected/` deterministic oracle. The unresolved fixture must fail and the expected overlay must pass. Output-only and human-review cases may omit both `fixture/` and `expected/`. These checks may run repository-owned command assertions but start no target model.
 
 ## Plan before running
 
@@ -34,7 +34,7 @@ Use `fieldlab plan` and report:
 - target-agent invocations;
 - LLM-grader invocations;
 - model and effort selection;
-- attribution level;
+- subject scope and verification methods;
 - sandbox, approval, and network boundary.
 
 Planning does not authorize execution.
@@ -51,4 +51,4 @@ Do not infer consent from enthusiasm, skill activation, repository context, CI, 
 
 ## Interpret narrowly
 
-A passing case supports the behavior and boundaries encoded by that case. A repaired case proves the repair. Broader claims need later comparable evidence. Preserve raw trace as authority and mark human inference as inference.
+A passing case supports the behavior and boundaries encoded by that case. A repaired case proves the repair. Broader claims need later comparable evidence. Preserve raw trace as execution authority; attach later human judgment as a separate review record bound to the sealed receipt digest.

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/skill-field-lab/v2/decision.schema.json",
+  "title": "Final local mechanism disposition",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "decision_id", "candidate_id", "decision", "rationale", "accepted_kernel", "excluded_machinery", "evidence_references", "landing_plane", "local_delta", "reopen_condition"],
+  "properties": {
+    "schema_version": {"const": 2},
+    "decision_id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "candidate_id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "decision": {"enum": ["ADOPT", "ADAPT", "REJECT", "DEFER", "ALREADY COVERED"]},
+    "rationale": {"type": "string", "minLength": 1},
+    "accepted_kernel": {"type": "string"},
+    "excluded_machinery": {"type": "string"},
+    "evidence_references": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "landing_plane": {"enum": ["runtime", "eval-maintainer", "packaging", "docs-provenance"]},
+    "local_delta": {"type": "string"},
+    "reopen_condition": {"type": "string", "minLength": 1}
+  }
+}

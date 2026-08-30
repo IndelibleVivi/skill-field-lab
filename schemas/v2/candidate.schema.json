@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/skill-field-lab/v2/candidate.schema.json",
+  "title": "External mechanism candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "candidate_id", "source", "pin", "reviewed_files", "source_observations", "distilled_mechanism", "local_problem", "local_fit", "landing_plane", "open_questions"],
+  "properties": {
+    "schema_version": {"const": 2},
+    "candidate_id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "source": {"type": "object", "minProperties": 1},
+    "pin": {"type": "string", "minLength": 1},
+    "license_note": {"type": "string"},
+    "review_date": {"type": "string"},
+    "reviewed_files": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "source_observations": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "distilled_mechanism": {"type": "string", "minLength": 1},
+    "local_problem": {"type": ["string", "null"]},
+    "local_fit": {"type": "string", "minLength": 1},
+    "landing_plane": {"enum": ["runtime", "eval-maintainer", "packaging", "docs-provenance"]},
+    "open_questions": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+  }
+}

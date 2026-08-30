@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/skill-field-lab/v2/lab.schema.json",
+  "title": "Skill Field Lab v2 workspace manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "lab_id", "description", "subjects", "cases_root", "defaults"],
+  "properties": {
+    "schema_version": {"const": 2},
+    "lab_id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "description": {"type": "string", "minLength": 1},
+    "cases_root": {"type": "string", "minLength": 1},
+    "subjects": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {"pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+      "additionalProperties": {"$ref": "#/$defs/subject"}
+    },
+    "defaults": {"$ref": "#/$defs/defaults"},
+    "metadata": {"type": "object"}
+  },
+  "$defs": {
+    "subject": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": {
+            "kind": {"const": "control"},
+            "label": {"type": "string", "minLength": 1},
+            "notes": {"type": "string"},
+            "subject_scope": {"const": "isolated-control"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "source"],
+          "properties": {
+            "kind": {"const": "agent-skill"},
+            "label": {"type": "string", "minLength": 1},
+            "notes": {"type": "string"},
+            "subject_scope": {"const": "workspace-scoped"},
+            "mount": {"type": "string", "minLength": 1},
+            "source": {"$ref": "#/$defs/source"}
+          }
+        }
+      ]
+    },
+    "source": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "path"],
+          "properties": {
+            "type": {"const": "local-path"},
+            "path": {"type": "string", "minLength": 1}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "repo", "ref", "subpath"],
+          "properties": {
+            "type": {"const": "local-git-ref"},
+            "repo": {"type": "string", "minLength": 1},
+            "ref": {"type": "string", "minLength": 1},
+            "subpath": {"type": "string", "minLength": 1}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "path"],
+          "properties": {
+            "type": {"const": "snapshot"},
+            "path": {"type": "string", "minLength": 1}
+          }
+        }
+      ]
+    },
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["adapter", "approval_policy", "network_access", "output_root", "keep_workspace"],
+      "properties": {
+        "adapter": {"const": "codex-exec"},
+        "approval_policy": {"enum": ["untrusted", "on-request", "never"]},
+        "network_access": {"type": "boolean"},
+        "output_root": {"type": "string", "minLength": 1},
+        "keep_workspace": {"type": "boolean"}
+      }
+    }
+  }
+}

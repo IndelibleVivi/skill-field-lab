@@ -40,7 +40,7 @@ def _safe_member_relative(member_name: str, source_path: str) -> Path | None:
     return Path(*relative.parts)
 
 
-def snapshot_git_tree(
+def materialize_git_tree(
     *,
     repo: Path,
     ref: str,
@@ -94,13 +94,30 @@ def snapshot_git_tree(
     if not any(output.rglob("*")):
         shutil.rmtree(output)
         raise ExecutionError(f"Git snapshot was empty: {ref}:{source_path}")
-    metadata = {
-        "schema_version": 1,
-        "created_at": utc_now(),
+    return {
+        "schema_version": 2,
         "source_ref": ref,
         "resolved_commit": resolved_commit,
         "source_path": source.as_posix(),
         "tree_sha256": tree_digest(output),
     }
+
+
+def snapshot_git_tree(
+    *,
+    repo: Path,
+    ref: str,
+    source_path: str,
+    output: Path,
+    replace: bool,
+) -> dict[str, Any]:
+    metadata = materialize_git_tree(
+        repo=repo,
+        ref=ref,
+        source_path=source_path,
+        output=output,
+        replace=replace,
+    )
+    metadata = {**metadata, "created_at": utc_now()}
     atomic_write_json(output.parent / f"{output.name}.snapshot.json", metadata)
     return metadata

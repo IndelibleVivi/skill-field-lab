@@ -1,43 +1,75 @@
-VALID demo-skill-pack: 2 subjects, 1 cases
-SELFTEST demo-skill-pack: 1 cases credible
-  tiny-copy: fixture failed 3 assertion(s); expected passed 3 assertion(s)
-Target-agent invocations: 0
-VALID legal-research-example: 1 subjects, 1 cases
-SELFTEST legal-research-example: 1 cases credible
-  authority-boundary: fixture failed 5 assertion(s); expected passed 5 assertion(s)
-Target-agent invocations: 0
-test_repo_scoped_command_has_explicit_identity_and_current_flags (test_adapter.AdapterCommandTests.test_repo_scoped_command_has_explicit_identity_and_current_flags) ... ok
-test_repo_scoped_execution_isolates_home_but_preserves_codex_home (test_adapter.AdapterCommandTests.test_repo_scoped_execution_isolates_home_but_preserves_codex_home) ... ok
-test_canary_requires_explicit_model_and_effort (test_contracts.ContractTests.test_canary_requires_explicit_model_and_effort) ... ok
-test_demo_pack_and_case_validate (test_contracts.ContractTests.test_demo_pack_and_case_validate) ... ok
-test_environment_smoke_is_single_noncomparison_attempt (test_contracts.ContractTests.test_environment_smoke_is_single_noncomparison_attempt) ... ok
-test_environment_smoke_rejects_repo_scoped_subject (test_contracts.ContractTests.test_environment_smoke_rejects_repo_scoped_subject) ... ok
-test_plan_hash_detects_mutation (test_contracts.ContractTests.test_plan_hash_detects_mutation) ... ok
-test_installer_creates_working_dependency_free_launcher (test_install_cli.LocalCliInstallerTests.test_installer_creates_working_dependency_free_launcher) ... ok
-test_demo_and_legal_expected_overlays_are_credible (test_pack_selftest.PackSelftestTests.test_demo_and_legal_expected_overlays_are_credible) ... ok
-test_selftest_rejects_missing_expected_overlay (test_pack_selftest.PackSelftestTests.test_selftest_rejects_missing_expected_overlay) ... ok
-test_clean_success_remains_clean (test_process.ProcessIsolationTests.test_clean_success_remains_clean) ... ok
-test_keyboard_interrupt_uses_same_group_cleanup (test_process.ProcessIsolationTests.test_keyboard_interrupt_uses_same_group_cleanup) ... ok
-test_parent_exit_with_live_descendant_is_not_clean_success (test_process.ProcessIsolationTests.test_parent_exit_with_live_descendant_is_not_clean_success) ... ok
-test_timeout_kills_descendant_before_artifacts_are_sealed (test_process.ProcessIsolationTests.test_timeout_kills_descendant_before_artifacts_are_sealed) ... ok
-test_fake_codex_pass_and_resume_identity (test_runner.RunnerTests.test_fake_codex_pass_and_resume_identity) ... ok
-test_live_and_cap_are_mandatory (test_runner.RunnerTests.test_live_and_cap_are_mandatory) ... ok
-test_live_refuses_case_or_subject_drift_after_plan (test_runner.RunnerTests.test_live_refuses_case_or_subject_drift_after_plan) ... ok
-test_live_refuses_codex_executable_drift_after_plan (test_runner.RunnerTests.test_live_refuses_codex_executable_drift_after_plan) ... ok
-test_all_json_schemas_are_valid_json_and_draft_2020_12 (test_schemas.SchemaSyntaxTests.test_all_json_schemas_are_valid_json_and_draft_2020_12) ... ok
-test_snapshot_materializes_exact_old_subject_tree_without_model (test_snapshot.GitSnapshotTests.test_snapshot_materializes_exact_old_subject_tree_without_model) ... ok
-test_copy_into_root_manifests_resolve_after_materialization (test_softpowers_companion.SoftpowersCompanionTests.test_copy_into_root_manifests_resolve_after_materialization) ... ok
-test_unknown_and_malformed_events_are_preserved_as_evidence (test_trace.TraceTests.test_unknown_and_malformed_events_are_preserved_as_evidence) ... ok
-test_timed_command_assertion_cannot_leave_late_child (test_verify.CommandAssertionIsolationTests.test_timed_command_assertion_cannot_leave_late_child) ... ok
-test_fixture_symlink_cannot_escape_disposable_tree (test_workspace.WorkspaceBoundaryTests.test_fixture_symlink_cannot_escape_disposable_tree) ... ok
-test_internal_relative_symlink_is_preserved (test_workspace.WorkspaceBoundaryTests.test_internal_relative_symlink_is_preserved) ... ok
+Skill Field Lab v0.2 verification report
+Date: 2026-08-30
 
-----------------------------------------------------------------------
-Ran 25 tests in 20.022s
+PRIMARY BUNDLE CHECK
+Command: python3 scripts/check_bundle.py
+Result: PASS
 
-OK
-PASS demo-subject/tiny-copy repeat=1 artifacts=/tmp/tmpkud_ywy4/output/runs/fake-run/demo-subject/tiny-copy/repeat-001/attempt-001
-Run fake-run completed: 1/1 attempts passed.
-SKIP demo-subject/tiny-copy repeat=1 outcome=pass
-Run fake-run completed: 1/1 attempts passed.
-Bundle check passed. Target-agent invocations: 0
+- Python package compilation: PASS
+- examples/demo/fieldlab.json validate + selftest: PASS
+- examples/legal-research/fieldlab.json validate + selftest: PASS
+- unittest discovery: 46 tests passed in 16.933s
+- target-agent invocations: 0
+- LLM-grader invocations: 0
+
+CROSS-VERSION SUITES
+
+- Python 3.10: 46 tests passed in 16.726s
+- Python 3.12: 46 tests passed in 16.352s
+- Python 3.13 host bundle check: 46 tests passed in 16.933s
+
+JSON SCHEMA CHECK
+
+- Draft 2020-12 metaschema validation: 9/9 active schemas PASS
+- bundled labs, cases, and record templates: PASS
+- both real migrated plans and migration receipts: PASS
+- representative observed receipt, attempt receipt, and separate review: PASS
+
+THE 46 TESTS COVER
+
+- v2-only manifest, case, record, receipt, review, and schema contracts
+- init, claim-only observe, promote, and one-shot v1 migration
+- local-path, local-git-ref, snapshot, and isolated-control subjects
+- final-response and bounded JSON-result verification
+- canary/matched plans, immutable input identity, and drift rejection
+- fake-adapter execution, mandatory live/cap boundary, and resume identity
+- timeout, interrupt, orphan descendant, target-child, and verifier-child cleanup
+- transactional install, replacement backup, collision refusal, CLI-only mode,
+  and rollback after a simulated mid-commit failure
+- escaping-symlink rejection and raw unknown/malformed trace preservation
+
+INSTALLED COPY
+
+Command: ~/.local/bin/fieldlab doctor --json
+Result: PASS
+
+- version: 0.2.0
+- recognized install: true
+- installation receipt matches installed source: true
+- pattern-intake digest matches installed source: true
+- skill-eval digest matches installed source: true
+- Python, Git, Codex, and supported POSIX host checks: PASS
+- target-agent invocations: 0
+
+INSTALLED REAL-SUBJECT INTEGRATION
+
+- Softpowers migrated external v2 lab: validate PASS; 9-case selftest PASS
+- Repository Operational Truth Audit migrated external v2 lab: validate PASS;
+  6-case selftest PASS
+- both source checkout digests unchanged: PASS
+- both source HEAD/status identities unchanged: PASS
+- real target plans executed: 0
+
+CONTROLLER VALIDATION
+
+- installed pattern-intake: Skill is valid
+- installed skill-eval: Skill is valid
+
+NOT VERIFIED
+
+- AC-10 real controlled Repository Operational Truth Audit attempt
+- automatic controller discovery in a later fresh Codex task
+- tag/release/publication
+
+The source candidate is not presented as a released v0.2 while AC-10 remains
+open.

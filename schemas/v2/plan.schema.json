@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/skill-field-lab/v2/plan.schema.json",
+  "title": "Immutable Field Lab v2 execution plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "run_id", "created_at", "manifest_path", "lab_id", "mode", "comparison_capable", "subjects", "cases", "repeat", "target_invocations", "llm_grader_invocations", "matrix", "planned_inputs", "execution", "plan_sha256"],
+  "properties": {
+    "schema_version": {"const": 2},
+    "run_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "created_at": {"type": "string"},
+    "manifest_path": {"type": "string", "minLength": 1},
+    "lab_id": {"type": "string", "minLength": 1},
+    "mode": {"enum": ["canary", "matched"]},
+    "comparison_capable": {"type": "boolean"},
+    "subjects": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+    "cases": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+    "repeat": {"type": "integer", "minimum": 1},
+    "target_invocations": {"type": "integer", "minimum": 1},
+    "llm_grader_invocations": {"const": 0},
+    "matrix": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+    "planned_inputs": {"type": "object"},
+    "execution": {"type": "object"},
+    "plan_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

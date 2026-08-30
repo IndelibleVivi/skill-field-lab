@@ -1,55 +1,29 @@
-# Migration from Soft Eval
+# Historical migration from embedded Soft Eval
 
-Status: completed in Softpowers commit `4180b49`. Phases 1–3 and 5 passed
-without a real target-model invocation; the optional live canary in phase 4
-was intentionally not required. The procedure below is retained as the
-forward-only migration and recovery reference.
+Status: **completed historical record**. Softpowers commit `4180b49` removed
+the embedded generic runner after standalone fake-adapter and process-boundary
+verification. Do not execute the old copy/install procedure from v0.1.
 
-The migration must be staged. Do not delete an embedded runner before the
-standalone fake-adapter regression passes.
+Current authority:
 
-## Phase 1 — Add the companion manifest
+- [One-shot v1-to-v2 migration](MIGRATION_V1_TO_V2.md) for an existing legacy
+  `fieldlab-pack.json`;
+- [Softpowers case study](../case-studies/softpowers.md) for the ownership and
+  integration boundary; and
+- [Installation](INSTALLATION.md) for the single current app/controller
+  installation.
 
-Copy into Softpowers:
+The durable historical decisions remain:
 
-- `softpowers-companion/fieldlab-pack.copy-into-softpowers-root.json` -> `fieldlab-pack.json` at the Softpowers repository root;
-- any case files that differ from the current `evals/cases/` tree;
-- empty `evals/claims/`, `evals/receipts/`, and `evals/decisions/` directories as needed.
+- generic process, quota, and receipt machinery belongs to standalone Skill
+  Field Lab, not a generated `soft-eval` Skill;
+- Softpowers owns its cases, candidates, claims, decisions, and activation
+  materials;
+- deterministic and fake-adapter migration checks require no target model;
+- optional live evidence always needs a saved plan, `--live`, and an exact cap;
+  and
+- Git history, rather than an inert duplicate tree, preserves the retired
+  implementation.
 
-Keep current cases and candidate records in place.
-
-## Phase 2 — Validate without quota
-
-From the Softpowers root, with Field Lab installed:
-
-```bash
-fieldlab validate fieldlab-pack.json
-fieldlab selftest-pack fieldlab-pack.json
-fieldlab list fieldlab-pack.json
-python -m unittest discover -s /path/to/skill-field-lab/tests -v
-```
-
-## Phase 3 — Fake adapter migration check
-
-Run Field Lab's bundled unit suite. It uses fake Codex executables and consumes no model quota. Confirm:
-
-- model and effort drift fail resume identity;
-- a timeout kills a real descendant process;
-- no late sentinel or late trace append occurs;
-- successful fake behavior remains stable.
-
-## Phase 4 — Optional one-case real canary
-
-Only when Faye chooses to spend quota, plan one `tiny-copy` run with an exact model and effort. Do not run all cases merely to prove the migration exists.
-
-## Phase 5 — Remove the embedded machinery
-
-After the migration check:
-
-- remove `evals/run_behavior_evals.py`;
-- stop projecting it into generated skills;
-- retire `skills/soft-eval/` as a bundled executable skill;
-- remove `methods/eval.md` from Softpowers routing or replace it with a short pointer to the optional companion;
-- update build, manifest, validation, README, changelog, licensing map, and generated-tree checks together.
-
-Preserve historical revisions. No history rewrite is required.
+The former `softpowers-companion/` projection is preserved by tag `v0.1.0` and
+removed from current source. No history rewrite occurred.

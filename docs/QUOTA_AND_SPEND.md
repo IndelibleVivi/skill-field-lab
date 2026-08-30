@@ -1,45 +1,50 @@
 # Quota and spend contract
 
-Field Lab treats target-agent invocation as an external side effect.
+Target-agent invocation is an explicit external side effect.
 
-## Actions that never start a target agent
+## No additional target invocation
 
-- loading either controller skill;
-- `fieldlab validate`;
-- `fieldlab selftest-pack` (may execute repository-owned deterministic command assertions);
-- `fieldlab list`;
-- `fieldlab plan`;
-- `fieldlab import-observed`;
-- `fieldlab snapshot-git`;
-- CI and unit tests;
-- installing or copying skills;
-- reading receipts and decisions.
+These actions start no target model:
 
-These actions may occur inside an already-running assistant session, so they are described as **no additional target-agent invocation**, not as universally free.
+- loading `pattern-intake` or explicit `skill-eval`;
+- `doctor`, `init`, `validate`, `list`, `selftest`, `snapshot-git`, `observe`,
+  `review`, `plan`, `promote`, and `migrate-v1`;
+- installation, upgrade preflight, backup, and doctor checks;
+- unit tests and CI; and
+- reading plans, receipts, reviews, or decisions.
+
+They may execute deterministic repository-owned commands or run inside an
+already active assistant task, so the precise claim is **zero additional
+target-agent invocations**, not zero compute of every kind.
 
 ## Live gate
 
-A live execution requires all of the following:
+Live execution requires all of:
 
-1. a saved plan;
-2. `fieldlab run`;
-3. the `--live` flag;
-4. `--max-invocations N` at or above the plan matrix count;
-5. a supported adapter and host.
+1. one saved immutable schema-v2 plan;
+2. an explicit matrix of subjects, cases, and repeats;
+3. an explicit requested model and reasoning effort;
+4. `fieldlab run <plan>`;
+5. `--live`;
+6. `--max-invocations N` at least equal to the saved matrix count; and
+7. a supported adapter and POSIX host.
 
-The plan reports target-agent and LLM-grader invocation counts together with model, effort, attribution, approval, network, sandbox, and timeout boundaries. It pins exact input digests; changed prompts, fixtures, case contracts, manifests, or subject overlays require a new plan. V0.1's grader count is fixed at zero.
+The runner re-pins all planned identities immediately before execution. A
+changed manifest, case, prompt, fixture, subject source, Field Lab source, or
+available executable requires a new plan.
 
-## Defaults
+## No hidden spend
 
-- no implicit `--all`;
-- `repeat=1`;
-- one subject for a canary;
-- explicit model and effort for comparison-capable evidence;
-- no background runs;
-- no scheduled runs;
-- no automatic baseline;
-- no automatic retry that increases the declared matrix.
+- no implicit all-cases mode;
+- `repeat=1` unless explicitly increased in the plan;
+- no automatic baseline or control insertion;
+- no automatic retry;
+- no LLM grader in v0.2;
+- no background or scheduled run; and
+- no mutable ambient smoke path.
 
-## Existing dogfood first
+## Existing evidence first
 
-Before creating a synthetic case, check whether an ordinary task already left useful trace, diff, tests, or human review. Import it as `observed + unmatched` evidence. Do not relabel it as a controlled experiment.
+Before planning a synthetic case, inspect ordinary traces, diffs, tests, or
+reviews. `observe` records them as observed evidence bound to a claim. Do not
+relabel imported evidence as a Field Lab execution or matched comparison.

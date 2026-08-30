@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import os
+import re
 from pathlib import Path
 from typing import Any
 
@@ -20,13 +22,133 @@ def assertion_result(assertion_type: str, passed: bool, message: str, **details:
     return result
 
 
-def evaluate_file_assertions(
-    case: dict[str, Any],
+def _json_type_matches(value: object, expected: str) -> bool:
+    if expected == "object":
+        return isinstance(value, dict)
+    if expected == "array":
+        return isinstance(value, list)
+    if expected == "string":
+        return isinstance(value, str)
+    if expected == "integer":
+        return isinstance(value, int) and not isinstance(value, bool)
+    if expected == "number":
+        return isinstance(value, (int, float)) and not isinstance(value, bool)
+    if expected == "boolean":
+        return isinstance(value, bool)
+    if expected == "null":
+        return value is None
+    return False
+
+
+def _json_schema_errors(value: object, schema: dict[str, Any], path: str = "$") -> list[str]:
+    errors: list[str] = []
+    expected_type = schema.get("type")
+    if isinstance(expected_type, str) and not _json_type_matches(value, expected_type):
+        return [f"{path}: expected {expected_type}"]
+    if "const" in schema and value != schema["const"]:
+        errors.append(f"{path}: value does not match const")
+    if "enum" in schema and value not in schema["enum"]:
+        errors.append(f"{path}: value is not in enum")
+    if isinstance(value, str):
+        minimum = schema.get("minLength")
+        if isinstance(minimum, int) and len(value) < minimum:
+            errors.append(f"{path}: string is shorter than minLength")
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        if isinstance(schema.get("minimum"), (int, float)) and value < schema["minimum"]:
+            errors.append(f"{path}: number is below minimum")
+        if isinstance(schema.get("maximum"), (int, float)) and value > schema["maximum"]:
+            errors.append(f"{path}: number is above maximum")
+    if isinstance(value, list):
+        if isinstance(schema.get("minItems"), int) and len(value) < schema["minItems"]:
+            errors.append(f"{path}: array is shorter than minItems")
+        item_schema = schema.get("items")
+        if isinstance(item_schema, dict):
+            for index, item in enumerate(value):
+                errors.extend(_json_schema_errors(item, item_schema, f"{path}[{index}]"))
+    if isinstance(value, dict):
+        required = schema.get("required", [])
+        if isinstance(required, list):
+            for key in required:
+                if key not in value:
+                    errors.append(f"{path}: missing required property {key}")
+        properties = schema.get("properties", {})
+        if isinstance(properties, dict):
+            for key, property_schema in properties.items():
+                if key in value and isinstance(property_schema, dict):
+                    errors.extend(_json_schema_errors(value[key], property_schema, f"{path}.{key}"))
+            if schema.get("additionalProperties") is False:
+                for key in value:
+                    if key not in properties:
+                        errors.append(f"{path}: unexpected property {key}")
+    return errors
+
+
+def evaluate_result_assertions(case: dict[str, Any], final_response: str) -> list[dict[str, Any]]:
+    assertions = case.get("result_assertions", {})
+    results: list[dict[str, Any]] = []
+    for expected in assertions.get("text_contains", []):
+        passed = expected in final_response
+        results.append(
+            assertion_result(
+                "text_contains",
+                passed,
+                "final response contains value" if passed else "final response omits value",
+                expected=expected,
+            )
+        )
+    for forbidden in assertions.get("text_not_contains", []):
+        passed = forbidden not in final_response
+        results.append(
+            assertion_result(
+                "text_not_contains",
+                passed,
+                "final response omits forbidden value" if passed else "final response contains forbidden value",
+                forbidden=forbidden,
+            )
+        )
+    for pattern in assertions.get("text_matches", []):
+        passed = re.search(pattern, final_response) is not None
+        results.append(
+            assertion_result(
+                "text_matches",
+                passed,
+                "final response matches pattern" if passed else "final response does not match pattern",
+                pattern=pattern,
+            )
+        )
+    schema = assertions.get("json_schema")
+    if isinstance(schema, dict):
+        try:
+            value = json.loads(final_response)
+        except json.JSONDecodeError as exc:
+            results.append(
+                assertion_result(
+                    "json_schema",
+                    False,
+                    "final response is not valid JSON",
+                    error=str(exc),
+                )
+            )
+        else:
+            errors = _json_schema_errors(value, schema)
+            results.append(
+                assertion_result(
+                    "json_schema",
+                    not errors,
+                    "final response matches JSON schema" if not errors else "final response violates JSON schema",
+                    errors=errors,
+                )
+            )
+    return results
+
+
+def _evaluate_assertion_list(
+    assertions: list[dict[str, Any]],
     workspace: Path,
     assertion_artifacts: Path,
 ) -> list[dict[str, Any]]:
     results: list[dict[str, Any]] = []
-    for index, assertion in enumerate(case["assertions"]):
+    for index, assertion in enumerate(assertions):
         assertion_type = assertion["type"]
         if assertion_type == "changed_files_exact":
             actual = changed_files(workspace)
@@ -114,6 +236,48 @@ def evaluate_file_assertions(
             )
         )
     return results
+
+
+def evaluate_workspace_assertions(
+    case: dict[str, Any],
+    workspace: Path,
+    assertion_artifacts: Path,
+) -> list[dict[str, Any]]:
+    return _evaluate_assertion_list(
+        list(case.get("workspace_assertions", [])),
+        workspace,
+        assertion_artifacts,
+    )
+
+
+def evaluate_command_assertions(
+    case: dict[str, Any],
+    workspace: Path,
+    assertion_artifacts: Path,
+) -> list[dict[str, Any]]:
+    assertions = [
+        assertion if assertion.get("type") == "command" else {"type": "command", **assertion}
+        for assertion in case.get("command_assertions", [])
+    ]
+    return _evaluate_assertion_list(
+        assertions,
+        workspace,
+        assertion_artifacts,
+    )
+
+
+def evaluate_file_assertions(
+    case: dict[str, Any],
+    workspace: Path,
+    assertion_artifacts: Path,
+) -> list[dict[str, Any]]:
+    """Evaluate the deterministic workspace oracle used by lab self-test."""
+    commands = [
+        assertion if assertion.get("type") == "command" else {"type": "command", **assertion}
+        for assertion in case.get("command_assertions", [])
+    ]
+    assertions = list(case.get("workspace_assertions", [])) + commands
+    return _evaluate_assertion_list(assertions, workspace, assertion_artifacts)
 
 
 def evaluate_trace_assertions(case: dict[str, Any], summary: dict[str, Any]) -> list[dict[str, Any]]:

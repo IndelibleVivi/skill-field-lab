@@ -7,6 +7,9 @@ description: "Inspect a relevant external repository or framework, distill one r
 
 Use external work as evidence and contrast, not as automatic authority over the local system.
 
+A complete study may end here. Do not create a Field Lab manifest, case, fixture,
+or target-agent run merely to make the study look substantive.
+
 ## Pin before judging
 
 Record the repository, exact commit or release, applicable license, files actually reviewed, review date, and one narrow mechanism. Separate source facts from your inference.
@@ -15,7 +18,7 @@ Record the repository, exact commit or release, applicable license, files actual
 
 Remove product names and marketing language. State the invariant in portable terms. Then name the local problem it may solve: an observed failure, repeated overhead, evidence gap, recovery problem, packaging boundary, or host-contract change.
 
-No local problem means `DEFER`, `ALREADY COVERED`, or `REJECT: no demonstrated need` is legitimate.
+No local problem means `DEFER`, `ALREADY COVERED`, or `REJECT: no demonstrated need` is legitimate. Existing local coverage is evidence of success, not a reason to manufacture a change.
 
 ## Choose the lowest landing plane
 
@@ -42,7 +45,7 @@ Always preserve the accepted kernel and excluded machinery. A rejection is still
 
 ## Stop before spend
 
-First ask whether existing dogfood, deterministic inspection, or a known pass/fail fixture already answers the question. When an unresolved behavior claim remains, hand it to `$skill-eval` for a no-spend plan.
+First ask whether existing ordinary work, deterministic inspection, or a known pass/fail fixture already answers the question. When one unresolved behavior claim remains and stronger evidence would change the decision, hand only that claim to `$skill-eval`.
 
 Do not call `fieldlab run`, start a target model, edit the local project, open a PR, commit, publish, or release unless the user explicitly authorizes that action.
 

@@ -1,7 +1,7 @@
 interface:
-  display_name: "Skill Eval"
-  short_description: "Plan quota-explicit skill behavior evidence"
-  default_prompt: "Use $skill-eval to turn this behavior claim into the smallest defensible no-spend plan. Report invocation cost before any live run."
+  display_name: "Field Trial"
+  short_description: "Find the weakest sufficient evidence path"
+  default_prompt: "Use $skill-eval to test whether existing work already resolves this one behavior claim. If not, design the smallest defensible no-spend plan and enumerate every target invocation before any live run."
 policy:
   products:
     - CODEX

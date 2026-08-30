@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/skill-field-lab/v2/migration-receipt.schema.json",
+  "title": "V1-to-v2 migration receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "receipt_type", "created_at", "source_manifest", "output_manifest", "subjects", "cases_tree_sha256", "claims"],
+  "properties": {
+    "schema_version": {"const": 2},
+    "receipt_type": {"const": "migration-v1"},
+    "created_at": {"type": "string"},
+    "source_manifest": {"type": "object"},
+    "output_manifest": {"type": "object"},
+    "subjects": {"type": "array"},
+    "cases_tree_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "claims": {"type": "object"}
+  }
+}

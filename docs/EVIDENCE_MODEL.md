@@ -1,40 +1,107 @@
 # Evidence model
 
-Evidence dimensions are orthogonal. A receipt may be:
+Status: current v0.2 evidence contract.
 
-```text
-synthetic + repo_scoped + matched + deterministic + implementer-run
-```
+Field Lab answers one question at a time: what is the weakest evidence that can
+resolve this claim without overstating what happened?
 
-or:
+## Claim authority
 
-```text
-observed + ambient + unmatched + human + implementer-run
-```
+A claim contains:
 
-## Origin
+- one falsifiable `statement`;
+- the `observable_delta` that would distinguish it;
+- `preserved_behaviors[]` that must not regress;
+- one or more `sufficient_evidence[]` routes; and
+- a status that never substitutes for the underlying receipt.
 
-- `observed`: evidence arose during ordinary work and was imported later.
-- `synthetic`: Field Lab deliberately launched a case.
+Candidate records do not own a final disposition. Decision records are the
+sole owner of `ADOPT | ADAPT | REJECT | DEFER | ALREADY COVERED` and cite the
+evidence actually used.
 
-## Attribution
+## Weakest sufficient lane
 
-- `ambient`: the current CLI environment, including mutable user configuration.
-- `repo_scoped`: a disposable repository with subject overlays, an isolated worker `HOME`, the official user-skill path hidden, and `$CODEX_HOME/config.toml` ignored. The operator's `CODEX_HOME` is retained for authentication. Administrator, system, or undocumented legacy skill surfaces may still be visible.
-- `hermetic`: reserved until an adapter can prove complete subject visibility and isolation. V0.1 rejects it.
+Use these lanes in order:
 
-## Comparison
+1. **Source inspection.** The mechanism and local contrast already resolve the
+   decision. No receipt or local change is mandatory.
+2. **Observed ordinary work.** An existing trace, diff, test, review, or other
+   durable artifact binds directly to a claim. A case is optional.
+3. **Single canary.** One subject receives the smallest synthetic case.
+4. **Matched trial.** An isolated control and workspace-scoped Skill subject
+   receive identical non-subject inputs, model request, effort, permissions,
+   and repeats.
 
-- `unmatched`: no controlled counterpart.
-- `single`: one controlled subject/case attempt.
-- `matched`: multiple subjects with the same case and execution identity.
+Field Lab does not add an LLM grader in v0.2. Human judgment is declared before
+execution and recorded later as a separate review.
 
-## Verification
+## Independent evidence dimensions
 
-- `deterministic`: file, command, trace, or structured checks.
-- `human`: an explicit review judgment.
-- `llm`: reserved; not implemented in v0.1.
+Never collapse these into one score:
 
-## Model identity wording
+| Dimension | Values | Meaning |
+| --- | --- | --- |
+| `origin` | `observed`, `synthetic` | Whether Field Lab executed the attempt |
+| `subject_scope` | `isolated-control`, `workspace-scoped`, `hermetic` | What subject material was present and isolated |
+| `comparison` | `unmatched`, `single`, `matched` | Whether comparable alternatives were exercised |
+| `verification_methods[]` | `deterministic`, `human`, `llm` | How the evidence was checked |
+| `independence` | `implementer-run`, `separate-agent`, `external-reviewer` | Who performed the judgment |
 
-The runner records the exact requested model and effort overrides. It does not claim those fields are provider-side proof of the final served model. An adapter may add stronger resolved identity only when raw runtime evidence supports it.
+`hermetic` is reserved. An isolated worker home and ignored user config support
+workspace-scoped evidence; they do not prove that every host influence is gone
+or that the selected Skill was the exclusive cause.
+
+## Attempt outcomes
+
+Synthetic attempts seal exactly one of:
+
+- `pass`;
+- `fail`;
+- `error`;
+- `timeout`;
+- `termination-failure`; or
+- `inconclusive`.
+
+Observed claim assessments use `supported`, `not-supported`, or `inconclusive`
+and map to receipt outcomes without pretending an imported artifact was a
+Field Lab execution.
+
+## Verification surfaces
+
+A v2 case can check:
+
+- final response text inclusion, exclusion, regular expressions, or a bounded
+  JSON Schema subset;
+- workspace file content and exact changed-file set;
+- bounded repository-owned commands;
+- raw trace ceilings and required reference reads; and
+- named human-review requirements.
+
+Final response is first-class. A valid case may change no file and have no
+fixture. `expected/` exists only when a deterministic known-fail/known-pass
+oracle is useful.
+
+## Receipt and review boundary
+
+An attempt receipt records identity, subject scope, selection evidence,
+process-quiescence result, verification summary, and content-light artifact
+digests. The raw trace, final output, diff, stderr, and detailed verification
+stay in the attempt directory.
+
+Receipts are immutable. A human reviewer creates a separate record containing
+the receipt path and SHA-256, independence, judgment, rationale, and requirement
+outcomes. The review adds interpretation; it does not edit history.
+
+## Claim ceilings
+
+- A passing deterministic case supports only the encoded prompt, subject,
+  environment, assertions, and pinned identities.
+- A matched result is stronger comparison evidence, not proof of exclusive
+  causation.
+- Requested model and effort describe caller selection unless provider trace
+  proves an actual resolved identity.
+- A green test proves only its executed entrypoint and assertions.
+- A public-safe screened receipt may omit private raw artifacts, but every
+  omitted layer must remain `UNKNOWN` or explicitly unverified.
+- Source, committed code, installed bytes, activated discovery, live execution,
+  and owner acceptance remain separate evidence gates.

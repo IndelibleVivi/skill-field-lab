@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.2.0 — Unreleased
+
+- Reframed Field Lab as one local maintainer workbench with Level 0 intake,
+  Level 1 external labs, and explicit Level 2 evidence promotion.
+- Made schema-v2 `fieldlab.json` the only active runtime contract; v1 is now an
+  explicit one-shot migration input with case rewriting and a migration receipt.
+- Added local-path, local-Git-ref, snapshot, and isolated-control subjects,
+  matched control plans, subject/source drift rejection, and a registry seam for
+  the single `codex-exec` adapter.
+- Corrected candidate/claim/decision authority, added claim-only observed
+  evidence, final-response and bounded JSON verification, immutable execution
+  receipts, and separate digest-bound human reviews.
+- Added `doctor`, `init`, canonical `selftest`, `observe`, `review`, `promote`,
+  and `migrate-v1`; removed `selftest-pack`, `import-observed`, ambient
+  environment-smoke, and the v1 runner path.
+- Replaced independent CLI/Skill copy scripts with one transactional installer
+  supporting recognized upgrades, recoverable backups, rollback, `--cli-only`,
+  and installed source/controller verification.
+- Renamed the explicit-only `skill-eval` display surface to **Field Trial** and
+  taught Pattern Intake to finish successfully with no lab or local change.
+- Added v2 demo and final-response-only legal-research labs; removed the
+  top-level Softpowers functional copy in favor of source-backed case studies.
+- Preserved the process containment kernel and expanded fake-adapter, drift,
+  installer, migration, review, and final-response regressions.
+
 ## 0.1.0 — 2026-08-17
 
 - Split external pattern intake from executable skill evaluation.

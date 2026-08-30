@@ -23,8 +23,8 @@ class WorkspaceBoundaryTests(unittest.TestCase):
             with self.assertRaisesRegex(ConfigError, "symlink escapes"):
                 prepare_workspace(
                     case_dir=case_dir,
-                    subject={"overlays": []},
-                    pack_dir=root,
+                    subject={"kind": "control"},
+                    lab_root=root,
                     workspace=root / "workspace",
                 )
 
@@ -40,8 +40,8 @@ class WorkspaceBoundaryTests(unittest.TestCase):
             workspace = root / "workspace"
             prepare_workspace(
                 case_dir=case_dir,
-                subject={"overlays": []},
-                pack_dir=root,
+                subject={"kind": "control"},
+                lab_root=root,
                 workspace=workspace,
             )
             self.assertTrue((workspace / "link.txt").is_symlink())

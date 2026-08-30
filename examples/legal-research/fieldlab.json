@@ -1,0 +1,29 @@
+{
+  "schema_version": 2,
+  "lab_id": "legal-research-example",
+  "description": "A final-response-only example for source-bounded legal research behavior.",
+  "cases_root": "cases",
+  "subjects": {
+    "isolated-control": {
+      "kind": "control",
+      "label": "Isolated no-Skill control"
+    },
+    "legal-source-discipline": {
+      "kind": "agent-skill",
+      "label": "Primary-authority source discipline",
+      "source": {
+        "type": "local-path",
+        "path": "subject-skills"
+      },
+      "mount": ".agents/skills",
+      "notes": "Demonstrates final-response evidence without a source-code edit or generated answer file."
+    }
+  },
+  "defaults": {
+    "adapter": "codex-exec",
+    "approval_policy": "never",
+    "network_access": false,
+    "output_root": "runs",
+    "keep_workspace": false
+  }
+}

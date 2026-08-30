@@ -7,22 +7,22 @@ from pathlib import Path
 from typing import Any
 
 from . import __version__
-from .adapters.codex_exec import CodexExecAdapter
-from .contracts import case_identity, load_cases, load_pack, subject_identity
+from .adapters.registry import create_adapter
+from .contracts import case_identity, load_cases, load_lab
 from .errors import ConfigError, ExecutionError
-from .io import (
-    atomic_write_json,
-    atomic_write_text,
-    canonical_json,
-    read_json,
-    sha256_text,
-    utc_now,
-)
+from .io import atomic_write_json, atomic_write_text, canonical_json, read_json, sha256_text, utc_now
 from .plan import planned_inputs, validate_plan
 from .receipts import synthetic_receipt
+from .subjects import subject_identity
 from .trace import parse_trace
-from .verify import evaluate_file_assertions, evaluate_trace_assertions
+from .verify import (
+    evaluate_command_assertions,
+    evaluate_result_assertions,
+    evaluate_trace_assertions,
+    evaluate_workspace_assertions,
+)
 from .workspace import capture_diff, changed_files, prepare_workspace
+
 
 TERMINAL_STATES = {"completed", "termination-failed"}
 
@@ -65,41 +65,38 @@ def _effective_execution(plan: dict[str, Any], case: dict[str, Any]) -> dict[str
 def _run_identity(
     *,
     plan: dict[str, Any],
-    pack: dict[str, Any],
-    pack_dir: Path,
+    lab: dict[str, Any],
+    lab_root: Path,
     cases: dict[str, tuple[Path, dict[str, Any]]],
     adapter_identity: dict[str, Any],
 ) -> dict[str, Any]:
     identity: dict[str, Any] = {
         "fieldlab_version": __version__,
         "fieldlab_source_sha256": plan["planned_inputs"]["fieldlab_source_sha256"],
-        "runtime": {
-            "python": platform.python_version(),
-            "platform": platform.platform(),
-        },
+        "runtime": {"python": platform.python_version(), "platform": platform.platform()},
         "plan_sha256": plan["plan_sha256"],
-        "pack": {
-            "pack_id": pack["pack_id"],
-            "sha256": sha256_text(canonical_json(pack)),
+        "manifest": {
+            "lab_id": lab["lab_id"],
+            **plan["planned_inputs"]["manifest"],
         },
         "cases": {
             case_id: case_identity(cases[case_id][0], cases[case_id][1])
             for case_id in plan["cases"]
         },
         "subjects": {
-            subject_id: subject_identity(pack["subjects"][subject_id], pack_dir)
+            subject_id: subject_identity(
+                subject_id,
+                lab["subjects"][subject_id],
+                lab_root,
+            )
             for subject_id in plan["subjects"]
         },
         "adapter": adapter_identity,
         "execution": {
             key: plan["execution"][key]
             for key in (
-                "selection_mode",
-                "requested_model",
-                "requested_reasoning_effort",
-                "approval_policy",
-                "network_access",
-                "timeout_override_seconds",
+                "selection_mode", "requested_model", "requested_reasoning_effort",
+                "approval_policy", "network_access", "timeout_override_seconds",
                 "keep_workspace",
             )
         },
@@ -108,6 +105,11 @@ def _run_identity(
     }
     identity["identity_sha256"] = sha256_text(canonical_json(identity))
     return identity
+
+
+def _run_directory(plan: dict[str, Any]) -> Path:
+    output_root = Path(plan["execution"]["output_root"])
+    return output_root / plan["run_id"]
 
 
 def run_plan(
@@ -131,23 +133,21 @@ def run_plan(
             f"plan requires {plan['target_invocations']} target invocations, "
             f"above --max-invocations {max_invocations}"
         )
-    if plan["mode"] == "environment-smoke" and resume:
-        raise ConfigError("environment-smoke runs cannot resume across mutable ambient defaults")
-
-    pack_path = Path(plan["pack_path"])
-    pack, pack_dir, cases_root = load_pack(pack_path)
+    manifest_path = Path(plan["manifest_path"])
+    lab, lab_root, cases_root = load_lab(manifest_path)
     cases = load_cases(cases_root)
-    if pack["pack_id"] != plan["pack_id"]:
-        raise ConfigError("plan pack_id no longer matches the loaded pack")
-    unknown_subjects = sorted(set(plan["subjects"]) - set(pack["subjects"]))
+    if lab["lab_id"] != plan["lab_id"]:
+        raise ConfigError("plan lab identity no longer matches the loaded manifest")
+    unknown_subjects = sorted(set(plan["subjects"]) - set(lab["subjects"]))
     unknown_cases = sorted(set(plan["cases"]) - set(cases))
     if unknown_subjects or unknown_cases:
         raise ConfigError(
             f"plan selections no longer exist; subjects={unknown_subjects}, cases={unknown_cases}"
         )
     current_planned_inputs = planned_inputs(
-        pack=pack,
-        pack_dir=pack_dir,
+        manifest_path=manifest_path,
+        lab=lab,
+        lab_root=lab_root,
         cases=cases,
         subject_ids=plan["subjects"],
         case_ids=plan["cases"],
@@ -155,21 +155,20 @@ def run_plan(
     )
     if current_planned_inputs != plan["planned_inputs"]:
         raise ConfigError(
-            "plan input drift: pack, case, fixture, prompt, subject overlay, or Codex executable changed; "
-            "create and review a new no-spend plan before running live"
+            "plan input drift: manifest, case, fixture, prompt, subject source, "
+            "Field Lab source, or adapter executable changed; create and review a new "
+            "no-spend plan before running live"
         )
-    adapter = CodexExecAdapter(plan["execution"]["codex_bin"])
-    adapter_identity = adapter.identity()
+    adapter = create_adapter(plan["execution"]["adapter"], plan["execution"]["codex_bin"])
     identity = _run_identity(
         plan=plan,
-        pack=pack,
-        pack_dir=pack_dir,
+        lab=lab,
+        lab_root=lab_root,
         cases=cases,
-        adapter_identity=adapter_identity,
+        adapter_identity=adapter.identity(),
     )
 
-    output_root = Path(plan["execution"]["output_root"])
-    run_dir = output_root / "runs" / plan["run_id"]
+    run_dir = _run_directory(plan)
     summary_path = run_dir / "summary.json"
     if run_dir.exists() and not resume:
         raise ConfigError(f"run already exists; use --resume or a new run id: {run_dir}")
@@ -190,10 +189,10 @@ def run_plan(
             )
 
     summary: dict[str, Any] = {
-        "schema_version": 1,
+        "schema_version": 2,
         "state": "running",
         "run_id": plan["run_id"],
-        "pack_id": pack["pack_id"],
+        "lab_id": lab["lab_id"],
         "mode": plan["mode"],
         "comparison_capable": plan["comparison_capable"],
         "started_at": utc_now(),
@@ -223,8 +222,8 @@ def run_plan(
             metadata = run_attempt(
                 plan=plan,
                 identity=identity,
-                pack=pack,
-                pack_dir=pack_dir,
+                lab=lab,
+                lab_root=lab_root,
                 subject_id=subject_id,
                 case_id=case_id,
                 case_dir=cases[case_id][0],
@@ -260,27 +259,38 @@ def run_plan(
     return 0 if passed else 1
 
 
+def _has_declared_deterministic_assertion(case: dict[str, Any]) -> bool:
+    result_assertions = case.get("result_assertions", {})
+    return bool(
+        any(result_assertions.get(key) for key in result_assertions)
+        or case.get("workspace_assertions")
+        or case.get("command_assertions")
+        or case.get("trace_assertions")
+    )
+
+
 def run_attempt(
     *,
     plan: dict[str, Any],
     identity: dict[str, Any],
-    pack: dict[str, Any],
-    pack_dir: Path,
+    lab: dict[str, Any],
+    lab_root: Path,
     subject_id: str,
     case_id: str,
     case_dir: Path,
     case: dict[str, Any],
     repeat: int,
     attempt_dir: Path,
-    adapter: CodexExecAdapter,
+    adapter: Any,
 ) -> dict[str, Any]:
     attempt_dir.mkdir(parents=True, exist_ok=False)
     workspace = attempt_dir / "workspace"
-    subject = pack["subjects"][subject_id]
+    subject = lab["subjects"][subject_id]
     prepare_workspace(
         case_dir=case_dir,
         subject=subject,
-        pack_dir=pack_dir,
+        lab_root=lab_root,
+        subject_id=subject_id,
         workspace=workspace,
     )
     prompt = (case_dir / case["prompt_file"]).read_text(encoding="utf-8").strip()
@@ -290,12 +300,12 @@ def run_attempt(
     attempt_id = attempt_dir.name
     input_identity = case_identity(case_dir, case)
     metadata: dict[str, Any] = {
-        "schema_version": 1,
+        "schema_version": 2,
         "state": "running",
         "outcome": "pending",
         "run_id": plan["run_id"],
         "attempt_id": attempt_id,
-        "pack_id": pack["pack_id"],
+        "lab_id": lab["lab_id"],
         "case_id": case_id,
         "subject_id": subject_id,
         "repeat": repeat,
@@ -308,6 +318,7 @@ def run_attempt(
         "artifacts": {
             "trace": "trace.jsonl",
             "stderr": "stderr.log",
+            "final_response": "final-output.md",
             "verification": "verification.json",
             "diff": "diff.patch",
             "receipt": "receipt.json",
@@ -337,20 +348,31 @@ def run_attempt(
         )
 
     trace_summary = parse_trace(attempt_dir / "trace.jsonl")
-    atomic_write_text(attempt_dir / "final-output.md", trace_summary["final_message"] + "\n")
-    file_results = evaluate_file_assertions(
+    final_response = trace_summary["final_message"]
+    atomic_write_text(attempt_dir / "final-output.md", final_response + "\n")
+    result_results = evaluate_result_assertions(case, final_response)
+    workspace_results = evaluate_workspace_assertions(
         case,
         workspace,
-        attempt_dir / "assertion-artifacts",
+        attempt_dir / "assertion-artifacts" / "workspace",
+    )
+    command_results = evaluate_command_assertions(
+        case,
+        workspace,
+        attempt_dir / "assertion-artifacts" / "commands",
     )
     trace_results = evaluate_trace_assertions(case, trace_summary)
     final_changed_files = changed_files(workspace)
     atomic_write_text(attempt_dir / "diff.patch", capture_diff(workspace))
+    all_results = result_results + workspace_results + command_results + trace_results
     verification = {
-        "schema_version": 1,
-        "passed": all(result["passed"] for result in file_results + trace_results),
-        "file_assertions": file_results,
+        "schema_version": 2,
+        "passed": all(result["passed"] for result in all_results),
+        "result_assertions": result_results,
+        "workspace_assertions": workspace_results,
+        "command_assertions": command_results,
         "trace_assertions": trace_results,
+        "human_review_requirements": list(case.get("human_review_requirements", [])),
         "changed_files": final_changed_files,
         "trace_summary": trace_summary,
     }
@@ -362,6 +384,8 @@ def run_attempt(
         outcome = "error"
     elif process_result.return_code != 0:
         outcome = "error"
+    elif not _has_declared_deterministic_assertion(case) and case.get("human_review_requirements"):
+        outcome = "inconclusive"
     elif verification["passed"]:
         outcome = "pass"
     else:
@@ -374,8 +398,9 @@ def run_attempt(
     receipt = synthetic_receipt(
         run_id=plan["run_id"],
         attempt_id=attempt_id,
-        pack_id=pack["pack_id"],
+        lab_id=lab["lab_id"],
         case_id=case_id,
+        claim_ids=list(case.get("claim_ids", [])),
         subject_id=subject_id,
         subject=subject,
         mode=plan["mode"],

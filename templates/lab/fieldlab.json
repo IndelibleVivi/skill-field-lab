@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "lab_id": "replace-with-lab-id",
+  "description": "Study one bounded reusable-agent behavior claim.",
+  "subjects": {
+    "isolated-control": {
+      "kind": "control"
+    }
+  },
+  "cases_root": "cases",
+  "defaults": {
+    "adapter": "codex-exec",
+    "approval_policy": "never",
+    "network_access": false,
+    "output_root": "runs",
+    "keep_workspace": false
+  }
+}

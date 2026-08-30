@@ -1,0 +1,29 @@
+{
+  "schema_version": 2,
+  "lab_id": "demo-skill-lab",
+  "description": "A one-case demonstration of an explicit local Skill subject and isolated control.",
+  "cases_root": "cases",
+  "subjects": {
+    "isolated-control": {
+      "kind": "control",
+      "label": "Isolated no-Skill control"
+    },
+    "demo-subject": {
+      "kind": "agent-skill",
+      "label": "Demo scope Skill",
+      "source": {
+        "type": "local-path",
+        "path": "subject-skills"
+      },
+      "mount": ".agents/skills",
+      "notes": "A repository-owned example source used only in deterministic and fake-adapter tests."
+    }
+  },
+  "defaults": {
+    "adapter": "codex-exec",
+    "approval_policy": "never",
+    "network_access": false,
+    "output_root": "runs",
+    "keep_workspace": false
+  }
+}

@@ -1,33 +1,25 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "case_id": "authority-boundary",
-  "description": "A legal research skill should ground its answer in the supplied primary authority and avoid invented authorities.",
+  "description": "A legal research Skill should ground its final response in the supplied primary authority and avoid invented authorities.",
   "prompt_file": "prompt.md",
-  "sandbox": "workspace-write",
+  "activation": "implicit",
+  "sandbox": "read-only",
   "timeout_seconds": 300,
-  "assertions": [
-    {
-      "type": "file_exists",
-      "path": "answer.md"
-    },
-    {
-      "type": "file_contains",
-      "path": "answer.md",
-      "value": "North Province"
-    },
-    {
-      "type": "file_contains",
-      "path": "answer.md",
-      "value": "NP-SC-17"
-    },
-    {
-      "type": "file_not_contains",
-      "path": "answer.md",
-      "value": "Smith v. North Province"
-    },
+  "result_assertions": {
+    "text_contains": [
+      "North Province",
+      "NP-SC-17",
+      "agency-created notice defect"
+    ],
+    "text_not_contains": [
+      "Smith v. North Province"
+    ]
+  },
+  "workspace_assertions": [
     {
       "type": "changed_files_exact",
-      "paths": ["answer.md"]
+      "paths": []
     }
   ],
   "trace_assertions": {

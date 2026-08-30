@@ -6,11 +6,11 @@ import time
 import unittest
 from pathlib import Path
 
-from fieldlab.verify import evaluate_file_assertions
+from fieldlab.verify import evaluate_command_assertions
 from fieldlab.workspace import prepare_workspace
 
 
-@unittest.skipUnless(os.name == "posix", "v0.1 live execution is POSIX-only")
+@unittest.skipUnless(os.name == "posix", "v0.2 live execution is POSIX-only")
 class CommandAssertionIsolationTests(unittest.TestCase):
     def test_timed_command_assertion_cannot_leave_late_child(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
@@ -32,20 +32,19 @@ sleep 60
             workspace = root / "workspace"
             prepare_workspace(
                 case_dir=case_dir,
-                subject={"overlays": []},
-                pack_dir=root,
+                subject={"kind": "control"},
+                lab_root=root,
                 workspace=workspace,
             )
             case = {
-                "assertions": [
+                "command_assertions": [
                     {
-                        "type": "command",
                         "argv": ["./check.sh", str(sentinel)],
                         "timeout_seconds": 1,
                     }
                 ]
             }
-            results = evaluate_file_assertions(case, workspace, root / "artifacts")
+            results = evaluate_command_assertions(case, workspace, root / "artifacts")
             sealed_stdout = root / "artifacts" / "command-000" / "stdout.log"
             sealed_size = sealed_stdout.stat().st_size
             time.sleep(1.6)

@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/skill-field-lab/v2/receipt.schema.json",
+  "title": "Content-light Field Lab v2 evidence receipt",
+  "type": "object",
+  "required": ["schema_version", "receipt_type", "created_at", "lab_id", "claim_ids", "subject_id", "evidence", "outcome", "artifacts"],
+  "properties": {
+    "schema_version": {"const": 2},
+    "receipt_type": {"enum": ["attempt", "observed"]},
+    "created_at": {"type": "string"},
+    "run_id": {"type": "string"},
+    "attempt_id": {"type": "string"},
+    "lab_id": {"type": "string", "minLength": 1},
+    "case_id": {"type": "string", "minLength": 1},
+    "claim_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "subject_id": {"type": "string", "minLength": 1},
+    "evidence": {
+      "type": "object",
+      "required": ["origin", "subject_scope", "comparison", "verification_methods", "independence", "comparison_capable"],
+      "properties": {
+        "origin": {"enum": ["observed", "synthetic"]},
+        "subject_scope": {"enum": ["isolated-control", "workspace-scoped", "hermetic"]},
+        "comparison": {"enum": ["unmatched", "single", "matched"]},
+        "verification_methods": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["deterministic", "human", "llm"]}},
+        "independence": {"enum": ["implementer-run", "separate-agent", "external-reviewer"]},
+        "comparison_capable": {"type": "boolean"},
+        "exclusive_subject_claimed": {"type": "boolean"}
+      }
+    },
+    "claim_assessment": {"enum": ["supported", "not-supported", "inconclusive"]},
+    "outcome": {"enum": ["pass", "fail", "error", "timeout", "termination-failure", "inconclusive"]},
+    "artifacts": {"type": "object"}
+  }
+}

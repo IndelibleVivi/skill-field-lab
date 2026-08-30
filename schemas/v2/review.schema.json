@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/skill-field-lab/v2/review.schema.json",
+  "title": "Human review bound to an immutable receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "review_id", "created_at", "receipt", "method", "independence", "judgment", "rationale", "requirement_outcomes"],
+  "properties": {
+    "schema_version": {"const": 2},
+    "review_id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "created_at": {"type": "string"},
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "method": {"const": "human"},
+    "independence": {"enum": ["implementer-run", "separate-agent", "external-reviewer"]},
+    "judgment": {"enum": ["supported", "not-supported", "inconclusive"]},
+    "rationale": {"type": "string", "minLength": 1},
+    "requirement_outcomes": {"type": "object", "additionalProperties": {"type": "string"}}
+  }
+}

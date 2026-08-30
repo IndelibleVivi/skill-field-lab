@@ -1,17 +1,18 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "candidate_id": "replace-me",
-  "source": "owner/repository",
-  "pinned_ref": "exact-commit-or-release",
+  "source": {
+    "type": "external-reference",
+    "locator": "owner/repository"
+  },
+  "pin": "exact-commit-or-release",
   "license_note": "Record the applicable source license and any rights boundary.",
   "reviewed_files": ["path/actually-reviewed"],
   "review_date": "YYYY-MM-DD",
-  "distilled_pattern": "Portable mechanism without product branding.",
-  "local_problem": "Observed local failure, overhead, evidence gap, or host change.",
+  "source_observations": ["One source-grounded observation."],
+  "distilled_mechanism": "Portable mechanism without product branding.",
+  "local_problem": null,
+  "local_fit": "Why the mechanism does or does not fit the current local system.",
   "landing_plane": "eval-maintainer",
-  "decision": "DEFER",
-  "accepted_kernel": "What is worth preserving.",
-  "excluded_machinery": "What should not be imported.",
-  "unresolved_claim_ids": [],
-  "reopen_condition": "Concrete condition that justifies another review."
+  "open_questions": []
 }

@@ -13,7 +13,7 @@ from fieldlab.runner import run_plan
 
 
 ROOT = Path(__file__).resolve().parent.parent
-DEMO_PACK = ROOT / "examples" / "demo" / "fieldlab-pack.json"
+DEMO_MANIFEST = ROOT / "examples" / "demo" / "fieldlab.json"
 
 
 def write_fake_codex(path: Path) -> None:
@@ -52,7 +52,7 @@ class RunnerTests(unittest.TestCase):
             fake = root / "fake-codex"
             write_fake_codex(fake)
             plan = build_plan(
-                pack_path=DEMO_PACK,
+                manifest_path=DEMO_MANIFEST,
                 subject_ids=["demo-subject"],
                 case_ids=["tiny-copy"],
                 mode="canary",
@@ -70,7 +70,7 @@ class RunnerTests(unittest.TestCase):
             self.assertEqual(run_plan(plan_path, live=True, max_invocations=1, resume=False), 0)
             self.assertEqual(run_plan(plan_path, live=True, max_invocations=1, resume=True), 0)
 
-            receipt_path = next((root / "output" / "runs" / "fake-run").glob("**/receipt.json"))
+            receipt_path = next((root / "output" / "fake-run").glob("**/receipt.json"))
             receipt = read_json(receipt_path)
             self.assertEqual(receipt["selection"]["requested_model"], "model-a")
             self.assertEqual(receipt["selection"]["requested_reasoning_effort"], "high")
@@ -102,11 +102,11 @@ class RunnerTests(unittest.TestCase):
             root = Path(raw)
             copied_demo = root / "demo"
             shutil.copytree(ROOT / "examples" / "demo", copied_demo)
-            copied_pack = copied_demo / "fieldlab-pack.json"
+            copied_manifest = copied_demo / "fieldlab.json"
             fake = root / "fake-codex"
             write_fake_codex(fake)
             plan = build_plan(
-                pack_path=copied_pack,
+                manifest_path=copied_manifest,
                 subject_ids=["demo-subject"],
                 case_ids=["tiny-copy"],
                 mode="canary",
@@ -132,7 +132,7 @@ class RunnerTests(unittest.TestCase):
             fake = root / "fake-codex"
             write_fake_codex(fake)
             plan = build_plan(
-                pack_path=DEMO_PACK,
+                manifest_path=DEMO_MANIFEST,
                 subject_ids=["demo-subject"],
                 case_ids=["tiny-copy"],
                 mode="canary",
@@ -158,7 +158,7 @@ class RunnerTests(unittest.TestCase):
             fake = root / "fake-codex"
             write_fake_codex(fake)
             plan = build_plan(
-                pack_path=DEMO_PACK,
+                manifest_path=DEMO_MANIFEST,
                 subject_ids=["demo-subject"],
                 case_ids=["tiny-copy"],
                 mode="canary",

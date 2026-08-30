@@ -7,9 +7,11 @@ from pathlib import Path
 
 from .errors import ConfigError, ExecutionError
 from .io import safe_relative
+from .subjects import materialize_subject
+from .trees import validate_tree_symlinks
 
 
-def _run_git(argv: list[str], cwd: Path, *, timeout: int = 30) -> subprocess.CompletedProcess[str]:
+def _run_git(argv: list[str], cwd: Path, *, timeout: int = 120) -> subprocess.CompletedProcess[str]:
     env = os.environ.copy()
     env["PYTHONDONTWRITEBYTECODE"] = "1"
     try:
@@ -27,58 +29,37 @@ def _run_git(argv: list[str], cwd: Path, *, timeout: int = 30) -> subprocess.Com
         raise ExecutionError(f"command failed in {cwd}: {' '.join(argv)}: {exc}") from exc
 
 
-def _validate_tree_symlinks(root: Path, label: str) -> None:
-    root_resolved = root.resolve()
-    for path in root.rglob("*"):
-        if not path.is_symlink():
-            continue
-        raw_target = Path(os.readlink(path))
-        if raw_target.is_absolute():
-            raise ConfigError(f"{label} refuses absolute symlink: {path}")
-        resolved_target = (path.parent / raw_target).resolve(strict=False)
-        try:
-            resolved_target.relative_to(root_resolved)
-        except ValueError as exc:
-            raise ConfigError(f"{label} symlink escapes its tree: {path} -> {raw_target}") from exc
-
-
-def _copy_overlay(source: Path, target: Path) -> None:
-    if source.is_dir():
-        if target.exists() and not target.is_dir():
-            raise ConfigError(f"overlay directory target is not a directory: {target}")
-        shutil.copytree(source, target, dirs_exist_ok=True, symlinks=True)
-        return
-    if source.is_file():
-        target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(source, target, follow_symlinks=False)
-        return
-    raise ConfigError(f"overlay source does not exist: {source}")
-
-
 def prepare_workspace(
     *,
     case_dir: Path,
     subject: dict,
-    pack_dir: Path,
+    lab_root: Path,
+    subject_id: str = "subject",
     workspace: Path,
 ) -> None:
     if workspace.exists():
         shutil.rmtree(workspace)
     fixture = case_dir / "fixture"
-    _validate_tree_symlinks(fixture, "fixture")
-    shutil.copytree(fixture, workspace, symlinks=True)
-    for overlay in subject.get("overlays", []):
-        source = safe_relative(pack_dir, overlay["source"])
-        if source.is_dir():
-            _validate_tree_symlinks(source, "subject overlay")
-        target = safe_relative(workspace, overlay["target"])
-        _copy_overlay(source, target)
+    if fixture.is_dir():
+        validate_tree_symlinks(fixture, "fixture")
+        shutil.copytree(fixture, workspace, symlinks=True)
+    else:
+        workspace.mkdir(parents=True)
+    materialize_subject(
+        subject_id=subject_id,
+        subject=subject,
+        lab_root=lab_root,
+        workspace=workspace,
+    )
 
     _run_git(["git", "init", "-q"], workspace)
     _run_git(["git", "config", "user.name", "Skill Field Lab"], workspace)
     _run_git(["git", "config", "user.email", "fieldlab@example.invalid"], workspace)
     _run_git(["git", "add", "--all"], workspace)
-    _run_git(["git", "commit", "--no-gpg-sign", "-q", "-m", "fieldlab baseline"], workspace)
+    _run_git(
+        ["git", "commit", "--allow-empty", "--no-gpg-sign", "-q", "-m", "fieldlab baseline"],
+        workspace,
+    )
 
 
 def changed_files(workspace: Path) -> list[str]:
@@ -117,7 +98,7 @@ def apply_expected(expected: Path, workspace: Path) -> None:
     copied = 0
     for source in sorted(expected.rglob("*")):
         if source.is_symlink():
-            raise ConfigError(f"expected overlay refuses symlinks in v0.1: {source}")
+            raise ConfigError(f"expected overlay refuses symlinks: {source}")
         if not source.is_file():
             continue
         relative = source.relative_to(expected).as_posix()

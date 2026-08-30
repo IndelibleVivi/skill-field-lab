@@ -16,6 +16,7 @@ Excluded machinery
 Existing evidence
 Unresolved claim (optional)
 Smallest next probe (optional)
+Why no lab is needed (optional)
 Verification if applied
 Reopen condition
 ```

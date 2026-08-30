@@ -64,8 +64,7 @@ class CodexExecAdapter:
             "--color",
             "never",
         ]
-        if subject["attribution"] == "repo_scoped":
-            command.append("--ignore-user-config")
+        command.append("--ignore-user-config")
         command.extend(["--sandbox", execution["sandbox"]])
         if execution["sandbox"] == "workspace-write":
             network = "true" if execution["network_access"] else "false"
@@ -99,20 +98,18 @@ class CodexExecAdapter:
         )
         env = os.environ.copy()
         env["PYTHONDONTWRITEBYTECODE"] = "1"
-        if subject["attribution"] == "repo_scoped":
-            # Keep Codex authentication in the operator's CODEX_HOME while hiding
-            # the official user-skill location under $HOME/.agents/skills from the
-            # worker. --ignore-user-config handles config.toml separately. This is
-            # repo-scoped isolation, not a hermetic/exclusive-subject claim.
-            operator_home = Path.home().resolve()
-            codex_home = Path(
-                env.get("CODEX_HOME", str(operator_home / ".codex"))
-            ).expanduser().resolve()
-            worker_home = trace_path.parent / "worker-home"
-            worker_home.mkdir(parents=True, exist_ok=True)
-            env["HOME"] = str(worker_home)
-            env["USERPROFILE"] = str(worker_home)
-            env["CODEX_HOME"] = str(codex_home)
+        # Keep Codex authentication in the operator's CODEX_HOME while hiding
+        # user Skill discovery under HOME. --ignore-user-config handles config
+        # separately. This is workspace-scoped, not hermetic, isolation.
+        operator_home = Path.home().resolve()
+        codex_home = Path(
+            env.get("CODEX_HOME", str(operator_home / ".codex"))
+        ).expanduser().resolve()
+        worker_home = trace_path.parent / "worker-home"
+        worker_home.mkdir(parents=True, exist_ok=True)
+        env["HOME"] = str(worker_home)
+        env["USERPROFILE"] = str(worker_home)
+        env["CODEX_HOME"] = str(codex_home)
         return run_bounded_process(
             command,
             cwd=workspace,

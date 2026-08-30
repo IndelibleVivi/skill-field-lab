@@ -32,7 +32,7 @@ def pid_is_running(pid: int) -> bool:
     return bool(status) and not status.startswith("Z")
 
 
-@unittest.skipUnless(os.name == "posix", "v0.1 live execution is POSIX-only")
+@unittest.skipUnless(os.name == "posix", "v0.2 live execution is POSIX-only")
 class ProcessIsolationTests(unittest.TestCase):
     def test_timeout_kills_descendant_before_artifacts_are_sealed(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

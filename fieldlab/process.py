@@ -130,14 +130,14 @@ def run_bounded_process(
 ) -> ProcessResult:
     """Run a command in a dedicated POSIX session and seal only after group quiescence.
 
-    Field Lab v0.1 intentionally fails closed on non-POSIX hosts. A clean parent exit
+    Field Lab v0.2 intentionally fails closed on non-POSIX hosts. A clean parent exit
     is insufficient: surviving descendants are terminated and the result is marked
     `orphan-descendants` so it cannot masquerade as a normal successful attempt.
     """
 
     if os.name != "posix":
         raise ExecutionError(
-            "live bounded execution is supported on POSIX hosts only in v0.1; "
+            "live bounded execution is supported on POSIX hosts only in v0.2; "
             "Windows needs a Job Object adapter before it can claim quiescence"
         )
     if timeout_seconds <= 0:

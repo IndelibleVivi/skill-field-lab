@@ -1,175 +1,242 @@
 # Skill Field Lab
 
-A standalone field lab for people who maintain reusable agent skills and need to decide what to learn from external repositories, what to adapt locally, and what evidence is worth paying for.
+[简体中文](README.zh-CN.md)
 
-Its first real subject is Softpowers. Softpowers remains a skill pack; Field Lab owns the generic evaluation protocol, bounded execution adapter, evidence contracts, and quota boundary.
+> **Study before you install. Test only what matters.**
 
-## Governing rule
+Skill Field Lab is a local maintainer workbench for learning from external
+agent Skills, evolving reusable behavior, and producing claim-bounded evidence
+without turning every useful mechanism into a dependency.
 
-> Activation grants analysis, not spend. Live execution requires an explicit run boundary.
+One user-level installation can study or exercise any explicitly selected
+local subject. The subject remains independently owned and usable: Field Lab
+does not copy its runtime into subject repositories, install subjects, or make
+them depend on this project.
 
-Installing a skill, loading a controller method, validating a pack, listing cases, writing a plan, or importing existing dogfood never starts a target-agent run. A live run requires both `fieldlab run --live` and an invocation cap.
+Current source contract: **0.2.0**. Source completeness, a local installation,
+a real target-agent receipt, a Git tag, and a published release are separate
+facts.
 
-## What is in the bundle
-
-- `skills/pattern-intake/`: inspect an external repository, distill a mechanism, and record `ADOPT`, `ADAPT`, `REJECT`, `DEFER`, or `ALREADY COVERED` without automatically launching an eval.
-- `skills/skill-eval/`: turn one concrete behavior claim into the smallest defensible evidence plan.
-- `fieldlab/`: dependency-free Python runner and the first `codex-exec` adapter.
-- `schemas/`: portable contracts for packs, cases, plans, receipts, candidates, claims, and decisions.
-- `examples/demo/`: deterministic starter pack.
-- `examples/legal-research/`: a non-DevOps example proving the core vocabulary is not hard-coded to Git diffs.
-- `softpowers-companion/`: the current three Softpowers canaries and a migration-ready pack manifest.
-
-## Controller–worker separation
-
-The controller may load `pattern-intake` and `skill-eval`. The target worker receives only its prompt, disposable fixture, selected subject overlay, and permitted tools. It does not receive hidden assertions, expected output, candidate rationale, or evaluator instructions.
+## The working model
 
 ```text
 external source
-  -> candidate
-  -> claim
-  -> case
-  -> no-spend plan
-  -> explicit live attempt (optional)
-  -> receipt
-  -> decision
+  -> Pattern Intake
+       -> ADOPT | ADAPT | REJECT | DEFER | ALREADY COVERED
+       -> no lab is a valid completed result
+       -> one unresolved claim, only when stronger evidence would matter
+            -> Field Trial
+                 -> existing ordinary-work evidence first
+                 -> smallest no-spend plan if still unresolved
+                 -> explicit capped live run only when separately authorized
 ```
 
-A candidate can stop at any point. Documentation-only intake decisions and imported dogfood need no synthetic target invocation.
+Field Lab has three intervention levels:
 
-## Run locally
+1. **Level 0 — intake only.** `$pattern-intake` pins and studies one external
+   mechanism. It needs no manifest, fixture, subject write, or model run.
+2. **Level 1 — external local lab.** `fieldlab init` creates an inspectable lab
+   anywhere you choose. It reads or materializes selected local sources into
+   disposable workspaces and leaves subject repositories unchanged.
+3. **Level 2 — subject-owned evidence.** `fieldlab promote` copies explicitly
+   selected records to a chosen subject evidence directory. It never promotes
+   the Field Lab runtime, manifest, plans, or run workspaces.
 
-The repository runs directly with Python 3.10+ and has no runtime dependencies or build step:
+`$skill-eval` is displayed as **Field Trial** and is explicit-only. It owns the
+evidence-path decision, not a global Skill score.
+
+## Install once
+
+Python 3.10+, Git, and Codex CLI are required. Live execution is POSIX-only in
+v0.2; Windows fails closed until equivalent process containment exists.
 
 ```bash
-python scripts/check_bundle.py
+python3 scripts/install.py
+~/.local/bin/fieldlab doctor
 ```
 
-For a user-level `fieldlab` command without relying on `pip` or a build backend:
+The transactional installer writes:
+
+- the dependency-free app to `~/.local/share/skill-field-lab`;
+- the launcher to `~/.local/bin/fieldlab`;
+- `pattern-intake` and `skill-eval` to
+  `${CODEX_HOME:-~/.codex}/skills`; and
+- an installation receipt inside the app.
+
+It refuses unknown collisions. Use `--replace` for an intentional recognized
+upgrade; the prior app, launcher, and controllers are copied to a recoverable
+backup before replacement. Use `--cli-only` when controller discovery must
+remain untouched. See [Installation and recovery](docs/INSTALLATION.md) for
+custom paths, rollback, and clean uninstall.
+
+## Start a v2 lab
 
 ```bash
-python scripts/install_cli.py
-fieldlab validate examples/demo/fieldlab-pack.json
+fieldlab init /path/to/my-study --lab-id my-study
+fieldlab validate /path/to/my-study/fieldlab.json
+fieldlab list /path/to/my-study/fieldlab.json
 ```
 
-The installer defaults to `${FIELDLAB_HOME:-~/.local/share/skill-field-lab}` and `${FIELDLAB_BIN_DIR:-~/.local/bin}`. It refuses to overwrite an existing directory or launcher unless `--replace` is supplied, and only replaces application directories carrying its own install marker.
+`init` creates an isolated control and empty record/case directories. Add an
+explicit local Skill source to `fieldlab.json`:
 
-`validate` checks contracts and paths. `selftest-pack` goes further: it creates disposable Git workspaces, proves each unresolved fixture fails at least one deterministic assertion, applies `expected/`, and proves every deterministic assertion passes. It may execute repository-owned command assertions, but it never starts a target model.
-
-To install the two controller skills into the current user skill directory:
-
-```bash
-python scripts/install_skills.py
+```json
+{
+  "schema_version": 2,
+  "lab_id": "my-study",
+  "description": "Test one unresolved reusable-agent behavior claim.",
+  "subjects": {
+    "isolated-control": {"kind": "control"},
+    "my-skill": {
+      "kind": "agent-skill",
+      "source": {"type": "local-path", "path": "/path/to/subject/skills/my-skill"}
+    }
+  },
+  "cases_root": "cases",
+  "defaults": {
+    "adapter": "codex-exec",
+    "approval_policy": "never",
+    "network_access": false,
+    "output_root": "runs",
+    "keep_workspace": false
+  }
+}
 ```
 
-The installer copies them to `${FIELDLAB_SKILLS_DIR:-~/.agents/skills}` only when explicitly run. Repository-scoped subjects are overlaid into disposable workspaces under `.agents/skills/`.
+Supported sources are `local-path`, `local-git-ref`, lab-owned `snapshot`, and
+`control`. Field Lab does not auto-clone URLs, resolve a marketplace, or guess
+installed Skills.
 
-## No-spend workflow
+Cases may assert the final agent response, workspace files, bounded commands,
+raw trace properties, or declared human-review needs. `fixture/` and
+`expected/` are optional. When an `expected/` oracle exists, this no-spend gate
+proves the unresolved fixture fails and the expected overlay passes:
 
 ```bash
-fieldlab list examples/demo/fieldlab-pack.json
+fieldlab selftest /path/to/my-study/fieldlab.json
+```
 
-fieldlab plan examples/demo/fieldlab-pack.json \
-  --subject demo-subject \
-  --case tiny-copy \
-  --mode canary \
-  --model <exact-model-id> \
+The bundled examples cover a file-edit oracle and a legal-research case that
+passes solely through final-response assertions:
+
+```bash
+fieldlab validate examples/demo/fieldlab.json
+fieldlab selftest examples/demo/fieldlab.json
+fieldlab validate examples/legal-research/fieldlab.json
+fieldlab selftest examples/legal-research/fieldlab.json
+```
+
+## Existing work comes first
+
+An ordinary trace, diff, test result, or review can bind directly to a claim;
+a synthetic case is not mandatory:
+
+```bash
+fieldlab observe /path/to/my-study/fieldlab.json \
+  --subject my-skill \
+  --claim one-bounded-claim \
+  --outcome supported \
+  --artifact review=/path/to/review.md \
+  --note "What the artifact establishes, and its limit."
+```
+
+Observed evidence is content-light and starts no target agent. A later human
+review is stored separately and binds the immutable receipt digest.
+
+## Plan before any spend
+
+Planning is read-only with respect to subjects and starts no target model:
+
+```bash
+fieldlab plan /path/to/my-study/fieldlab.json \
+  --subject isolated-control \
+  --subject my-skill \
+  --case one-case \
+  --mode matched \
+  --repeat 1 \
+  --model gpt-5.6-sol \
   --reasoning-effort high \
-  --output /tmp/demo-plan.json
+  --output /path/to/my-study/plans/one-plan.json
 ```
 
-The plan command prints the exact target invocation count, model/effort selection, subject attribution, approval/network settings, and each case sandbox/timeout. It pins the pack, prompt, fixture, case contract, subject overlay, Field Lab source, and available Codex executable digests. Any drift before `run --live` is rejected and requires a new no-spend plan. Planning does not call Codex.
+The plan enumerates every invocation and pins the manifest, prompt, case,
+fixture, subject source, Field Lab source, and available Codex executable.
+Changed input fails closed. Planning does not authorize execution.
 
-For a baseline-ref versus current-candidate comparison, materialize the old subject tree without a model call:
-
-```bash
-fieldlab snapshot-git \
-  --repo /path/to/softpowers \
-  --ref <baseline-commit> \
-  --source skills \
-  --output /path/to/softpowers/.fieldlab-subjects/baseline-skills
-```
-
-Then use the matched companion manifest with two explicit subjects. The snapshot command writes a content-light commit/tree receipt beside the output and reports `Target-agent invocations: 0`.
-
-Existing real work can be imported without rerunning it:
+A live run requires all three gates together:
 
 ```bash
-fieldlab import-observed examples/demo/fieldlab-pack.json \
-  --subject demo-subject \
-  --case tiny-copy \
-  --outcome pass \
-  --artifact diff=/path/to/diff.patch \
-  --artifact verification=/path/to/verification.json \
-  --note "Observed during ordinary repository work; unmatched dogfood." \
-  --output /tmp/observed-receipt.json
-```
-
-## Explicit live boundary
-
-```bash
-fieldlab run /tmp/demo-plan.json \
+fieldlab run /path/to/my-study/plans/one-plan.json \
   --live \
-  --max-invocations 1
+  --max-invocations 2
 ```
 
-The run refuses to start when `--live` is absent, when the cap is absent, or when the plan exceeds the cap. V0.1 has no LLM grader and never runs a full suite implicitly.
+There are no implicit retries, graders, repeats, baselines, or full suites.
+Target and verifier processes run in dedicated POSIX groups; evidence seals only
+after the group is quiescent.
 
-## Evidence strength
+## V1 is migration input, not a runtime
 
-Receipts keep these dimensions separate:
+There are no external v0.1 users, so v0.2 does not carry a dual runtime or
+legacy command aliases. Normal commands accept `fieldlab.json` schema v2 only.
+For Faye's own old packs:
 
-- origin: `observed` or `synthetic`;
-- attribution: `ambient` or `repo_scoped` in v0.1;
-- comparison: `unmatched`, `single`, or `matched`;
-- verification: `deterministic` or `human`;
-- independence: currently `implementer-run`.
+```bash
+fieldlab migrate-v1 /path/to/fieldlab-pack.json \
+  --output /path/to/new-external-lab/fieldlab.json
+```
 
-`repo_scoped` uses a disposable repository overlay, an isolated worker `HOME`, and `--ignore-user-config`. The isolated home hides the official user-skill location while the operator's `CODEX_HOME` remains available for authentication. This proves where the selected overlay was mounted and removes the ordinary user-home skill/config surface; administrator, system, or undocumented legacy surfaces may still exist. V0.1 therefore never claims exclusive or hermetic attribution and rejects a pack that claims `hermetic` attribution.
+The migrator preserves the source pack, rewrites cases to schema v2, snapshots
+legacy overlays into the new lab, and records any semantic change in a
+migration receipt.
 
-## Model and effort identity
+## Evidence ceiling
 
-Canary and matched plans require explicit model and reasoning effort. Receipts call these `requested_model` and `requested_reasoning_effort`; they do not pretend a caller override is provider-side proof of the actual resolved model. Ambient defaults are allowed only through `environment-smoke`, which is non-comparison evidence, `repeat=1`, and not resumable.
+Receipts keep independent dimensions separate:
 
-## Bounded execution
+- origin: `observed | synthetic`;
+- subject scope: `isolated-control | workspace-scoped | hermetic`;
+- comparison: `unmatched | single | matched`;
+- verification methods: `deterministic | human | llm`; and
+- independence: `implementer-run | separate-agent | external-reviewer`.
 
-On POSIX hosts every target process and every command assertion starts in a dedicated process group. A timeout, interrupt, or surviving descendant triggers group cleanup. Evidence is sealed only after quiescence is confirmed. A parent that exits while descendants survive is an error, even if its return code was zero.
+`hermetic` is reserved. Workspace-scoped evidence does not prove the selected
+Skill was the exclusive cause. Requested model and effort are caller-selection
+evidence unless the provider exposes stronger runtime identity.
 
-Fixture and subject-overlay trees reject absolute or escaping symlinks before entering the disposable workspace. Internal relative symlinks are preserved.
+## Repository map
 
-Windows live execution fails closed in v0.1. A Windows Job Object adapter is required before the project can claim equivalent process-tree containment.
+| Path | Authority |
+| --- | --- |
+| `docs/PRODUCT_SPEC_V0.2.md` | Accepted product and acceptance contract |
+| `docs/WORKSPACE_MODEL_V0.2.md` | Source identity, materialization, drift, and write boundaries |
+| `docs/SCHEMA_DELTA_V1_TO_V2.md` | V2 object authority and one-shot migration mapping |
+| `docs/ARCHITECTURE.md` | Controller, workspace, execution, and evidence topology |
+| `docs/EVIDENCE_MODEL.md` | Claim ceilings and receipt/review interpretation |
+| `docs/INSTALLATION.md` | Install, upgrade, rollback, uninstall, and doctor |
+| `schemas/v2/` | Active JSON Schemas |
+| `schemas/v1/` | Historical schemas used only to understand migration inputs |
+| `examples/` | Self-contained v2 labs |
+| `case-studies/` | Integration notes and screened receipts; never subject source |
 
-## Softpowers
+Softpowers and Repository Operational Truth Audit remain independent subjects.
+Their own repositories own their Skills and cases; Field Lab stores only
+integration notes and bounded evidence.
 
-Softpowers completed this migration at commit `4180b49`: its root
-`fieldlab-pack.json` now owns the subject mapping, the three canaries remain in
-Softpowers, and the generic runner plus generated `soft-eval` payload have been
-retired. The copies under `softpowers-companion/` remain reusable fixtures and
-provenance evidence. See `docs/SOFTPOWERS_INTEGRATION.md` and
-`docs/MIGRATION_FROM_SOFT_EVAL.md`.
+## Development verification
 
-## Deliberate limits of v0.1
+```bash
+python3 -m unittest discover -s tests -p 'test*.py'
+python3 scripts/check_bundle.py
+git diff --check
+```
 
-- one execution adapter: local Codex CLI;
-- case sandboxes are limited to `read-only` and `workspace-write`; `danger-full-access` is rejected in v0.1;
-- POSIX live execution only;
-- no cloud dashboard, background monitor, leaderboard, or scheduled spend;
-- no LLM judge;
-- no claim that repo-scoped isolation is hermetic;
-- no automatic publication, commit, tag, release, or external action;
+The test suite uses fake adapters for runner coverage. No ordinary repository
+test starts a target model.
 
-## License
+## Licensing
 
-Skill Field Lab uses layered licensing:
-
-- functional material—including the Python runtime, controller skills,
-  schemas, scripts, manifests, fixtures, and tests—is licensed under
-  [SUL-1.0](LICENSE);
-- original documentation is licensed under
-  [CC BY-NC-SA 4.0](LICENSE-DOCUMENTATION.md).
-
-See [LICENSING.md](LICENSING.md) for the authoritative path and provenance map.
-
-Codex plugin and package-index distribution are intentionally deferred; the
-v0.1 release surface is the public source repository and its release archive.
-See `docs/PACKAGING.md`.
+Project-original functional materials are source-available under SUL-1.0;
+project-original standalone documentation is under CC BY-NC-SA 4.0. See
+[LICENSING.md](LICENSING.md) for the path map. Third-party and independently
+owned subject material remains under its own terms.

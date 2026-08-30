@@ -25,7 +25,7 @@ exit 0
 
 
 class AdapterCommandTests(unittest.TestCase):
-    def test_repo_scoped_command_has_explicit_identity_and_current_flags(self) -> None:
+    def test_isolated_control_uses_same_home_and_config_isolation_as_skill_subject(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
             fake = root / "codex"
@@ -34,7 +34,28 @@ class AdapterCommandTests(unittest.TestCase):
             command = adapter.command(
                 workspace=root,
                 prompt="do the task",
-                subject={"attribution": "repo_scoped"},
+                subject={"kind": "control"},
+                execution={
+                    "approval_policy": "never",
+                    "sandbox": "read-only",
+                    "network_access": False,
+                    "selection_mode": "explicit",
+                    "requested_model": "model-a",
+                    "requested_reasoning_effort": "high",
+                },
+            )
+            self.assertIn("--ignore-user-config", command)
+
+    def test_skill_subject_command_has_explicit_identity_and_current_flags(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            fake = root / "codex"
+            write_fake(fake)
+            adapter = CodexExecAdapter(str(fake))
+            command = adapter.command(
+                workspace=root,
+                prompt="do the task",
+                subject={"kind": "agent-skill"},
                 execution={
                     "approval_policy": "never",
                     "sandbox": "workspace-write",
@@ -52,7 +73,7 @@ class AdapterCommandTests(unittest.TestCase):
         self.assertIn('model_reasoning_effort="high"', command)
         self.assertIn("sandbox_workspace_write.network_access=false", command)
 
-    def test_repo_scoped_execution_isolates_home_but_preserves_codex_home(self) -> None:
+    def test_skill_subject_execution_isolates_home_but_preserves_codex_home(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
             fake = root / "codex"
@@ -84,7 +105,7 @@ class AdapterCommandTests(unittest.TestCase):
                 adapter.execute(
                     workspace=workspace,
                     prompt="do the task",
-                    subject={"attribution": "repo_scoped"},
+                    subject={"kind": "agent-skill"},
                     execution={
                         "approval_policy": "never",
                         "sandbox": "workspace-write",

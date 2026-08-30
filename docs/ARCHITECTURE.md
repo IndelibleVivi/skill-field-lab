@@ -1,64 +1,119 @@
 # Architecture
 
-## Product boundary
+Status: current v0.2 source contract.
 
-Field Lab is a maintainer companion for reusable agent behavior. It is not part of the subject skill pack's ordinary runtime and subjects do not depend on it after installation.
+Skill Field Lab is one installed maintainer workbench around independently
+owned local subjects. It has no daemon, registry, background scheduler, or
+subject runtime dependency.
 
-The system has three planes:
+```mermaid
+flowchart LR
+  Source[External source] --> Intake[Pattern Intake]
+  Intake -->|closed decision| Decision[Decision record or no-change result]
+  Intake -->|one unresolved claim| Trial[Field Trial controller]
+  Trial -->|existing evidence| Observe[Observed receipt]
+  Trial -->|synthetic evidence needed| Plan[Immutable no-spend plan]
 
-1. **Controller skills** reason about external mechanisms, claims, cases, and evidence sufficiency.
-2. **Runner core** validates contracts, creates disposable workspaces, invokes an adapter only across an explicit spend boundary, and seals receipts.
-3. **Subject packs** own their candidates, claims, fixtures, assertions, receipts, and final evolution decisions.
+  Lab[External local lab] --> Plan
+  Subject[Independent subject repo] -->|read and pin only| Lab
+  Control[Isolated control] --> Plan
+  Plan -->|live flag and explicit cap| Runner[Codex adapter and protected runner]
+  Runner --> Attempt[Attempt artifacts and immutable receipt]
+  Attempt --> Review[Separate human review]
+  Observe --> Decision
+  Review --> Decision
 
-## Core records
+  Lab -->|explicit promote only| Owned[Subject-owned evidence directory]
+```
 
-### Candidate
+## Controller plane
 
-A pinned external source and one narrow mechanism. It records the exact source revision, reviewed files, local problem, accepted kernel, excluded machinery, and a provisional intake decision.
+`pattern-intake` studies one mechanism and may finish with `ADOPT`, `ADAPT`,
+`REJECT`, `DEFER`, or `ALREADY COVERED` without creating a lab. It is allowed
+to invoke implicitly because it starts no target model and grants no write or
+installation authority.
 
-### Claim
+`skill-eval`, displayed as **Field Trial**, is explicit-only. It receives one
+unresolved claim, looks for existing ordinary-work evidence first, then designs
+the weakest sufficient synthetic path only if the decision still needs it.
+Controller instructions, hidden assertions, expected artifacts, and evaluator
+advice never enter the target-worker prompt.
 
-One falsifiable behavior statement. It names the subject, observable change, adjacent behavior that must remain intact, and sufficient evidence. Field Lab does not score an entire skill with one number.
+## Workspace plane
 
-### Case
+`fieldlab.json` owns one inspectable lab. The active loader accepts schema v2
+only. A lab can point to:
 
-A stimulus plus disposable fixture and verifier contract. Activation cases should use ordinary blind prompts. Explicit method cases must say they are explicit.
+- an external `local-path`;
+- one `local-git-ref` plus repository-relative subpath;
+- a lab-owned immutable `snapshot`; or
+- an `isolated-control` with no subject overlay.
 
-### Plan
+All execution happens in disposable Git workspaces. Fixture and source
+symlinks are checked before copy. Local paths and Git refs are content-pinned
+into the plan; drift before execution rejects the plan. Level 1 operations do
+not write to the subject repository.
 
-An immutable no-spend matrix binding subjects, cases, repeats, adapter request, requested model, requested effort, sandbox, approval policy, network setting, timeout, output location, and exact pack/case/prompt/fixture/subject-overlay digests. Drift before the live boundary invalidates the plan.
+## Execution plane
 
-### Attempt
+The adapter registry currently exposes one real adapter: `codex-exec`.
+Provider independence is not claimed. The adapter:
 
-One target-agent invocation. Raw artifacts stay local by default.
+- passes only the ordinary case prompt and disposable workspace to the worker;
+- ignores user config and isolates worker `HOME` while retaining the operator's
+  Codex authentication directory;
+- uses the declared sandbox, approval, network, requested model, and requested
+  reasoning effort; and
+- streams raw JSONL trace and stderr into the attempt directory.
 
-### Receipt
+The runner preserves the v0.1 execution kernel:
 
-A content-light evidence envelope with hashes, identity, outcome, evidence dimensions, and a truthful model-selection claim.
+1. `plan` starts no target model and enumerates every invocation.
+2. `run` requires a saved plan, `--live`, and `--max-invocations`.
+3. Manifest, case, prompt, fixture, subject, Field Lab source, and available
+   executable identity are re-pinned immediately before execution.
+4. Target and command-verifier processes use dedicated POSIX process groups.
+5. Timeout, interrupt, parent-exit-with-child, and cleanup failure all converge
+   on bounded group termination.
+6. Evidence seals only after group quiescence. A termination failure cannot be
+   represented as a normal pass.
 
-### Decision
+Windows live execution remains unsupported because v0.2 has no equivalent Job
+Object containment adapter.
 
-The maintainer's `ADOPT`, `ADAPT`, `REJECT`, `DEFER`, or `ALREADY COVERED` result. A passing repair can support the narrow repair claim; broad improvement requires later comparable evidence.
+## Evidence plane
 
-## Why the evaluator cannot enter the worker context
+The record chain is:
 
-An evaluator that tells the target to read references, avoid unnecessary commands, or preserve provenance changes the behavior it claims to observe. Controller instructions, hidden assertions, expected files, and candidate rationale therefore stay outside the disposable worker repository.
+```text
+source -> candidate -> claim -> [case -> plan -> attempt -> receipt] -> decision
+```
 
-Only subject overlays are copied into `.agents/skills/`. For repo-scoped execution the adapter gives the worker an isolated `HOME`, preserves the operator's `CODEX_HOME` for authentication, and ignores user config. This removes the ordinary user-home skill/config surface without claiming administrator or system isolation. Verifiers run after the target execution group is quiescent.
+The bracketed synthetic chain is optional. `observe` may bind an existing
+artifact directly to a claim. Candidate describes a mechanism and local fit;
+Decision alone owns the final disposition. A sealed receipt is immutable;
+later human judgment lives in a separate review record bound to its digest.
 
-## Adapter contract
+Raw attempt artifacts stay in the lab. Receipts are content-light digests and
+bounded summaries. `promote` copies only selected candidates, claims, cases,
+receipts, reviews, and decisions. It never promotes the runtime, lab manifest,
+plans, or run workspaces.
 
-An adapter must provide:
+## Installation plane
 
-- a content-light executable identity;
-- an exact command construction record;
-- bounded execution;
-- a terminal quiescence result;
-- raw stdout/stderr artifacts;
-- no silent fallback from explicit to ambient model selection.
+`scripts/install.py` stages the app, launcher, and controllers before any
+replacement. It recognises only its own marker, launcher, current controller
+digests, or the two known v0.1 controller digests. Existing targets are copied
+to a recoverable backup; adjacent rollback identities remain available until
+the entire replacement commits. A mid-commit failure restores prior targets.
 
-An adapter that cannot prove cleanup reports termination failure and may not emit a normal terminal receipt.
+The installed app carries source controller copies so `fieldlab doctor` can
+compare installed discovery bytes with the installation source. Installed
+bytes still do not prove next-turn Skill discovery or any target behavior.
 
-## Deterministic pack credibility
+## Legacy boundary
 
-`fieldlab validate` checks structure and paths. `fieldlab selftest-pack` checks oracle credibility without a target agent: the unresolved fixture must fail at least one deterministic assertion, and the repository-owned `expected/` overlay must pass all deterministic assertions. Command assertions use the same bounded-process helper as target execution.
+V1 is not an alternate architecture. `migrate-v1` is an offline parser that
+creates a separate v2 lab, rewrites legacy cases, snapshots overlay sources,
+and records semantic changes. Every normal command thereafter uses the single
+v2 object and execution model.

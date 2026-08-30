@@ -1,16 +1,25 @@
-# Packaging direction
+# Packaging and distribution
 
-V0.1 is published as a standalone GitHub source repository and release archive
-for local authoring and dogfood:
+Status: v0.2 source contract; no v0.2 tag or public release is implied here.
 
-- the source tree runs directly with `python -m fieldlab`; `scripts/install_cli.py` provides a build-backend-free local launcher;
-- `pyproject.toml` remains future packaging metadata rather than a required local install path;
-- the two controller skills can be copied into the user's local skill directory;
-- subject packs stay in their own repositories.
+The supported local distribution surface is the stdlib-only transactional
+installer:
 
-For a future Codex marketplace-style distribution, package `pattern-intake`
-and `skill-eval` as a plugin rather than treating the local copy script as the
-final distribution surface. Keep the Python CLI independently installable so
-users can inspect and plan without installing subject packs. Do not add a
-plugin manifest until its current contract has been checked against the
-intended distribution surface.
+```bash
+python3 scripts/install.py
+```
+
+It installs one app, launcher, both controller Skills, and a provenance
+receipt. `pyproject.toml` remains valid Python packaging metadata but is not
+required for the ordinary local path. Subject Skills and cases stay in their
+own repositories and are never bundled into the app.
+
+The installed app includes `fieldlab/`, controller source, active/historical
+schemas, templates, version, and licensing files so `doctor` can verify the
+installation without relying on the source checkout.
+
+A future Codex plugin or marketplace projection is a separate distribution
+decision. Do not add a plugin manifest until its current host contract,
+permissions, update model, uninstall behavior, and source/install provenance
+have been checked. Any projection must preserve the independent CLI, the
+explicit spend gate, and subject ownership.
