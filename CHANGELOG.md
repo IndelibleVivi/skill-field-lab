@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added exact per-requirement JSON input to the public `fieldlab review` command,
+  with bounded-file, duplicate-key, receipt-key, and outcome-value validation;
+  reviews remain separate from immutable receipts and start no target model.
 - Added paired English and Simplified Chinese Mermaid architecture maps that
   make the live-spend gate, worker context ceiling, evidence authority,
   installation proof ceiling, and sole subject-write path explicit.

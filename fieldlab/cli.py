@@ -8,7 +8,7 @@ from pathlib import Path
 
 from .contracts import load_cases, load_lab
 from .doctor import doctor_report
-from .errors import FieldLabError
+from .errors import ConfigError, FieldLabError
 from .io import atomic_write_json, read_json
 from .lab import initialize_lab, migrate_v1, promote_lab
 from .plan import build_plan
@@ -18,6 +18,8 @@ from .runner import run_plan
 from .selftest import selftest_lab
 from .snapshot import snapshot_git_tree
 from .subjects import declared_subject_scope
+
+MAX_REQUIREMENT_OUTCOMES_BYTES = 1_000_000
 
 
 def _stamp() -> str:
@@ -43,6 +45,33 @@ def _require_unique_artifacts(values: list[tuple[str, Path]]) -> dict[str, Path]
     if len(artifacts) != len(values):
         raise FieldLabError("artifact names must be unique")
     return artifacts
+
+
+def _read_requirement_outcomes(path: Path) -> dict[str, str]:
+    path = path.expanduser()
+    if (path.is_symlink() or not path.is_file()
+            or path.stat().st_size > MAX_REQUIREMENT_OUTCOMES_BYTES):
+        raise ConfigError(
+            "requirement outcomes must be a bounded regular JSON file"
+        )
+
+    def unique_object(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ConfigError(f"duplicate requirement outcome key: {key}")
+            result[key] = value
+        return result
+
+    try:
+        value = json.loads(
+            path.read_text(encoding="utf-8"), object_pairs_hook=unique_object
+        )
+    except json.JSONDecodeError as exc:
+        raise ConfigError(f"invalid requirement outcomes JSON: {exc}") from exc
+    if not isinstance(value, dict):
+        raise ConfigError("requirement outcomes JSON root must be an object")
+    return value
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -103,6 +132,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     review.add_argument("--judgment", choices=["supported", "not-supported", "inconclusive"], required=True)
     review.add_argument("--rationale", required=True)
+    review.add_argument(
+        "--requirement-outcomes",
+        type=Path,
+        help=(
+            "JSON object mapping every exact receipt review requirement to "
+            "supported, not-supported, or inconclusive"
+        ),
+    )
     review.add_argument("--output", type=Path)
 
     plan = subparsers.add_parser("plan", help="Build an immutable, no-spend execution plan")
@@ -300,18 +337,26 @@ def command_observe(args: argparse.Namespace) -> int:
 
 def command_review(args: argparse.Namespace) -> int:
     lab, lab_root, _ = load_lab(args.manifest)
+    requirement_outcomes = (
+        None
+        if args.requirement_outcomes is None
+        else _read_requirement_outcomes(args.requirement_outcomes)
+    )
     record = human_review_record(
         review_id=args.review_id,
         receipt_path=args.receipt,
         independence=args.independence,
         judgment=args.judgment,
         rationale=args.rationale,
+        requirement_outcomes=requirement_outcomes,
     )
     output = (
         args.output.expanduser().resolve()
         if args.output
         else lab_root / "reviews" / f"{args.review_id}.json"
     )
+    if output == args.receipt.expanduser().resolve():
+        raise ConfigError("review output must not overwrite its immutable receipt")
     atomic_write_json(output, record)
     print(f"Human review written: {output}")
     print(f"Receipt remained immutable: {record['receipt']['sha256']}")

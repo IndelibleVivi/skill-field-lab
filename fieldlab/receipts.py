@@ -15,6 +15,23 @@ CLAIM_ASSESSMENTS = {"supported", "not-supported", "inconclusive"}
 REVIEW_INDEPENDENCE = {"implementer-run", "separate-agent", "external-reviewer"}
 
 
+def _declared_review_requirements(receipt: dict[str, Any]) -> list[str]:
+    verification = receipt.get("verification_summary", {})
+    if not isinstance(verification, dict):
+        raise ConfigError("receipt verification_summary must be an object")
+    human = verification.get("human_review", {})
+    if not isinstance(human, dict):
+        raise ConfigError("receipt human_review summary must be an object")
+    requirements = human.get("requirements", [])
+    if (not isinstance(requirements, list)
+            or any(not isinstance(item, str) or not item for item in requirements)
+            or len(set(requirements)) != len(requirements)):
+        raise ConfigError("receipt review requirements must be unique non-empty strings")
+    if human.get("required", bool(requirements)) is not bool(requirements):
+        raise ConfigError("receipt human_review required flag disagrees with its requirements")
+    return requirements
+
+
 def synthetic_receipt(
     *,
     run_id: str,
@@ -166,6 +183,23 @@ def human_review_record(
     receipt = read_json(receipt_path)
     if receipt.get("schema_version") != 2:
         raise ConfigError("human review requires a schema-v2 receipt")
+    requirements = _declared_review_requirements(receipt)
+    outcomes = {} if requirement_outcomes is None else requirement_outcomes
+    if not isinstance(outcomes, dict):
+        raise ConfigError("requirement outcomes must be a JSON object")
+    if any(not isinstance(key, str) for key in outcomes):
+        raise ConfigError("requirement outcome keys must be strings")
+    missing = sorted(set(requirements) - set(outcomes))
+    unexpected = sorted(set(outcomes) - set(requirements))
+    if missing or unexpected:
+        raise ConfigError(
+            "requirement outcome keys must exactly match the receipt requirements; "
+            f"missing={missing!r}, unexpected={unexpected!r}"
+        )
+    if any(value not in CLAIM_ASSESSMENTS for value in outcomes.values()):
+        raise ConfigError(
+            "requirement outcomes must be supported, not-supported, or inconclusive"
+        )
     return {
         "schema_version": 2,
         "review_id": review_id,
@@ -178,5 +212,5 @@ def human_review_record(
         "independence": independence,
         "judgment": judgment,
         "rationale": rationale,
-        "requirement_outcomes": requirement_outcomes or {},
+        "requirement_outcomes": outcomes,
     }

@@ -147,6 +147,24 @@ fieldlab observe /path/to/my-study/fieldlab.json \
 Observed evidence is content-light and starts no target agent. A later human
 review is stored separately and binds the immutable receipt digest.
 
+Create that review with a JSON object whose keys exactly match the receipt's
+declared human-review requirements. Omit `--requirement-outcomes` only when the
+receipt declares none:
+
+```bash
+fieldlab review /path/to/my-study/fieldlab.json \
+  --review-id one-bounded-review \
+  --receipt /path/to/my-study/runs/one-attempt/receipt.json \
+  --independence separate-agent \
+  --judgment supported \
+  --rationale "What the review supports and what remains unverified." \
+  --requirement-outcomes /path/to/requirement-outcomes.json
+```
+
+Each value must be `supported`, `not-supported`, or `inconclusive`. Missing,
+extra, duplicate, malformed, symlinked, or oversized outcome input fails closed.
+The review command starts no target agent and never edits the receipt.
+
 ## Plan before any spend
 
 Planning is read-only with respect to subjects and starts no target model:

@@ -143,6 +143,25 @@ fieldlab observe /path/to/my-study/fieldlab.json \
 Observed receipt 是 content-light 的，且不会启动 target agent。后续 human
 review 另存为独立 record，并绑定 immutable receipt digest。
 
+创建该 review 时，JSON object 的 keys 必须与 receipt 中声明的
+human-review requirements 完全一致。只有 receipt 没有声明任何
+requirements 时才可以省略 `--requirement-outcomes`：
+
+```bash
+fieldlab review /path/to/my-study/fieldlab.json \
+  --review-id one-bounded-review \
+  --receipt /path/to/my-study/runs/one-attempt/receipt.json \
+  --independence separate-agent \
+  --judgment supported \
+  --rationale "这份 review 支持什么，以及哪些仍未验证。" \
+  --requirement-outcomes /path/to/requirement-outcomes.json
+```
+
+每个 value 只能是 `supported`、`not-supported` 或 `inconclusive`。
+Missing、extra、duplicate、malformed、symlinked 或超过大小限制的
+outcome input 都会 fail closed。Review command 不启动 target agent，也不修改
+receipt。
+
 ## Spend 之前必须先 plan
 
 Plan 对 subject 是 read-only，也不会启动 target model：

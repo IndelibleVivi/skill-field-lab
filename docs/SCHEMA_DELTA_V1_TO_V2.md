@@ -91,7 +91,11 @@ A review is a separate immutable record containing:
 - `review_id`, timestamp, reviewer independence, and method;
 - the target receipt path and SHA-256 digest;
 - `supported | not-supported | inconclusive` judgment;
-- rationale and optional requirement outcomes.
+- rationale and an exact outcome for each declared human-review requirement.
+
+The outcome mapping is empty only when the receipt declares no requirements.
+Each value is `supported`, `not-supported`, or `inconclusive`; missing, extra,
+duplicate, or unsupported entries fail closed.
 
 The receipt is never reopened or edited to add the review.
 
