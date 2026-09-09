@@ -92,6 +92,12 @@ Receipts are immutable. A human reviewer creates a separate record containing
 the receipt path and SHA-256, independence, judgment, rationale, and requirement
 outcomes. The review adds interpretation; it does not edit history.
 
+When the receipt declares human-review requirements, the public review command
+requires one outcome for every exact requirement and rejects missing, extra, or
+unsupported values. A receipt with no declared requirements uses an empty
+mapping. This per-requirement record does not make the review rationale
+self-authenticating or expand the claim beyond the inspected evidence.
+
 ## Claim ceilings
 
 - A passing deterministic case supports only the encoded prompt, subject,

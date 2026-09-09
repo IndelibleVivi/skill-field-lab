@@ -22,6 +22,9 @@
     "independence": {"enum": ["implementer-run", "separate-agent", "external-reviewer"]},
     "judgment": {"enum": ["supported", "not-supported", "inconclusive"]},
     "rationale": {"type": "string", "minLength": 1},
-    "requirement_outcomes": {"type": "object", "additionalProperties": {"type": "string"}}
+    "requirement_outcomes": {
+      "type": "object",
+      "additionalProperties": {"enum": ["supported", "not-supported", "inconclusive"]}
+    }
   }
 }

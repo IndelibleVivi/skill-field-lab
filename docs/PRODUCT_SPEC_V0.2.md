@@ -2,6 +2,9 @@
 
 Status: accepted implementation authority, 2026-08-30
 
+Amended 2026-09-10: PS-19 now requires exact per-requirement outcomes from
+the public review command when a receipt declares human-review requirements.
+
 Repository baseline: `23ef2a5` (`v0.1.0`)
 
 Product name: **Skill Field Lab**
@@ -126,7 +129,10 @@ The normative record delta is in
   present; output-only or human-review cases are valid without one.
 - **PS-19 — Execution receipts are immutable.** Later human review is a
   separate record bound to the receipt digest. A review can add a verification
-  method without rewriting the sealed execution receipt.
+  method without rewriting the sealed execution receipt. When a receipt declares
+  human-review requirements, the public review command records exactly one
+  `supported`, `not-supported`, or `inconclusive` outcome for each requirement;
+  missing or extra outcomes fail closed.
 - **PS-20 — Evidence dimensions remain orthogonal.** V0.2 uses `subject_scope`
   (`isolated-control`, `workspace-scoped`, `hermetic`) and
   `verification_methods[]`. `hermetic` remains reserved.
