@@ -4,7 +4,14 @@ from pathlib import Path
 from typing import Any
 
 from .errors import ConfigError
-from .io import content_light_artifacts, read_json, sha256_file, utc_now
+from .io import (
+    content_light_artifacts,
+    read_json,
+    read_json_with_digest,
+    sha256_file,
+    utc_now,
+)
+from .review_material import MATERIAL_DIR_NAME
 from .subjects import declared_subject_scope
 
 
@@ -13,6 +20,24 @@ ATTEMPT_OUTCOMES = {
 }
 CLAIM_ASSESSMENTS = {"supported", "not-supported", "inconclusive"}
 REVIEW_INDEPENDENCE = {"implementer-run", "separate-agent", "external-reviewer"}
+
+
+def _attempt_artifact_names(attempt_dir: Path, verification: dict[str, Any]) -> list[str]:
+    names = [
+        "case.json", "prompt.md", "trace.jsonl", "stderr.log",
+        "final-output.md", "diff.patch", "verification.json", "metadata.json",
+    ]
+    names.extend(sorted(path.name for path in attempt_dir.glob("verifier-diff-*.patch")))
+    material = verification.get("review_material")
+    if isinstance(material, dict) and material.get("status") == "sealed":
+        manifest = material.get("manifest")
+        if isinstance(manifest, str):
+            names.append(manifest)
+        for entry in material.get("files", []):
+            relative = entry.get("path") if isinstance(entry, dict) else None
+            if isinstance(relative, str):
+                names.append(f"{MATERIAL_DIR_NAME}/{relative}")
+    return names
 
 
 def _declared_review_requirements(receipt: dict[str, Any]) -> list[str]:
@@ -95,7 +120,14 @@ def synthetic_receipt(
         "outcome": outcome,
         "verification_summary": {
             "passed": verification.get("passed", False),
+            "worker_completion_supported": verification.get(
+                "worker_completion_supported", verification.get("passed", False)
+            ),
             "changed_files": verification.get("changed_files", []),
+            "worker_final": verification.get("worker_final"),
+            "review_material": verification.get("review_material"),
+            "verifier": verification.get("verifier"),
+            "retention": verification.get("retention"),
             "usage": verification.get("trace_summary", {}).get("usage"),
             "human_review": {
                 "required": bool(human_requirements),
@@ -105,10 +137,7 @@ def synthetic_receipt(
         },
         "artifacts": content_light_artifacts(
             attempt_dir,
-            [
-                "case.json", "prompt.md", "trace.jsonl", "stderr.log",
-                "final-output.md", "diff.patch", "verification.json", "metadata.json",
-            ],
+            _attempt_artifact_names(attempt_dir, verification),
         ),
     }
 
@@ -180,7 +209,9 @@ def human_review_record(
     if judgment not in CLAIM_ASSESSMENTS:
         raise ConfigError(f"unsupported review judgment: {judgment}")
     receipt_path = receipt_path.expanduser().resolve()
-    receipt = read_json(receipt_path)
+    # Parse and hash the same bytes so the review always binds exactly the
+    # receipt content that was validated.
+    receipt, receipt_sha256 = read_json_with_digest(receipt_path)
     if receipt.get("schema_version") != 2:
         raise ConfigError("human review requires a schema-v2 receipt")
     requirements = _declared_review_requirements(receipt)
@@ -206,7 +237,7 @@ def human_review_record(
         "created_at": utc_now(),
         "receipt": {
             "path": str(receipt_path),
-            "sha256": sha256_file(receipt_path),
+            "sha256": receipt_sha256,
         },
         "method": "human",
         "independence": independence,
@@ -214,3 +245,34 @@ def human_review_record(
         "rationale": rationale,
         "requirement_outcomes": outcomes,
     }
+
+
+def load_review_record(path: Path) -> dict[str, Any]:
+    path = path.expanduser().resolve()
+    record = read_json(path)
+    if record.get("schema_version") != 2 or not isinstance(record.get("review_id"), str):
+        raise ConfigError(f"not a schema-v2 review record: {path}")
+    binding = record.get("receipt")
+    if not isinstance(binding, dict) or not isinstance(binding.get("sha256"), str):
+        raise ConfigError(f"review record is missing a receipt digest binding: {path}")
+    return record
+
+
+def load_review_records(
+    lab_root: Path,
+    extra_paths: list[Path] | None = None,
+) -> list[tuple[Path, dict[str, Any]]]:
+    """Read every lab-scoped review record plus any explicitly supplied review."""
+    candidates: list[Path] = []
+    reviews_dir = lab_root / "reviews"
+    if reviews_dir.is_dir():
+        candidates.extend(sorted(path for path in reviews_dir.rglob("*.json") if path.is_file()))
+    candidates.extend(path.expanduser().resolve() for path in extra_paths or [])
+    records: list[tuple[Path, dict[str, Any]]] = []
+    seen: set[Path] = set()
+    for path in candidates:
+        if path in seen:
+            continue
+        seen.add(path)
+        records.append((path, load_review_record(path)))
+    return records

@@ -52,3 +52,5 @@ Do not infer consent from enthusiasm, skill activation, repository context, CI, 
 ## Interpret narrowly
 
 A passing case supports the behavior and boundaries encoded by that case. A repaired case proves the repair. Broader claims need later comparable evidence. Preserve raw trace as execution authority; attach later human judgment as a separate review record bound to the sealed receipt digest.
+
+The receipt seals the worker-final changed-file set, diff, and tree digest before any verifier command runs. Workspace assertions read those sealed bytes; every command assertion starts from its own fresh copy of that tree. A verifier change to its own copy is attributed as verifier-derived and cannot by itself make the worker result a clean pass. A live workspace is not retained: when a pending review needs specific files, declare bounded `human_review_material` exact workspace-relative paths, and the runner seals them into attempt-owned `review-material/` before verification. Read one claim's recomputed view with `fieldlab explain <manifest> --claim <id>` instead of trusting `claim.status`.

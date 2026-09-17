@@ -7,6 +7,7 @@ from typing import Any
 
 from .errors import ConfigError
 from .io import canonical_json, read_json, safe_relative, sha256_text, tree_digest
+from .review_material import validate_declared_material
 
 
 V2_SCHEMA_VERSION = 2
@@ -151,6 +152,7 @@ def _load_case_v2(case_dir: Path, case: dict[str, Any], case_path: Path) -> dict
     optional = {
         "result_assertions", "workspace_assertions", "command_assertions",
         "trace_assertions", "human_review_requirements", "tags", "claim_ids",
+        "human_review_material",
     }
     missing = required - set(case)
     extra = set(case) - required - optional
@@ -196,6 +198,16 @@ def _load_case_v2(case_dir: Path, case: dict[str, Any], case_path: Path) -> dict
         case.get("human_review_requirements", []),
         f"{case_path}: human_review_requirements",
     )
+    review_material: list[str] | None = None
+    if "human_review_material" in case:
+        if not human:
+            raise ConfigError(
+                f"{case_path}: human_review_material requires human_review_requirements"
+            )
+        review_material = validate_declared_material(
+            case["human_review_material"],
+            f"{case_path}: human_review_material",
+        )
     for key in ("tags", "claim_ids"):
         _validate_string_list(case.get(key, []), f"{case_path}: {key}")
     has_result = any(result_assertions.get(key) for key in RESULT_ASSERTION_KEYS)
@@ -213,6 +225,8 @@ def _load_case_v2(case_dir: Path, case: dict[str, Any], case_path: Path) -> dict
         "tags": list(case.get("tags", [])),
         "claim_ids": list(case.get("claim_ids", [])),
     })
+    if review_material is not None:
+        normalized_case["human_review_material"] = review_material
     return normalized_case
 
 

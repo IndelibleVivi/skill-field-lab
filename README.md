@@ -165,6 +165,26 @@ Each value must be `supported`, `not-supported`, or `inconclusive`. Missing,
 extra, duplicate, malformed, symlinked, or oversized outcome input fails closed.
 The review command starts no target agent and never edits the receipt.
 
+## Explain one claim before trusting it
+
+`fieldlab explain` is read-only. It recomputes one claim's evidence view from
+its claims, immutable receipts, and separate reviews; it never trusts the
+hand-maintained `claim.status` and never counts a `PASS` as a conclusion:
+
+```bash
+fieldlab explain /path/to/my-study/fieldlab.json --claim one-bounded-claim
+```
+
+The report keeps `supported`, `unsupported`, and `inconclusive` evidence apart,
+adds `mixed` when bound reviews disagree, and shows subject identity, sealed
+worker-final output, verifier attribution, declared review material, and
+retention when the receipt recorded them. It deduplicates the same receipt
+copied to several canonical locations, labels legacy receipts that lack the
+worker-final boundary marker `legacy-ambiguous`, lists pending, failed, or
+conflicting review requirements and missing or digest-drifted artifacts, and
+names the smallest next evidence gap. `--json` emits the same structure for
+tooling. It starts no target model and modifies neither the lab nor the subject.
+
 ## Plan before any spend
 
 Planning is read-only with respect to subjects and starts no target model:
@@ -196,6 +216,31 @@ fieldlab run /path/to/my-study/plans/one-plan.json \
 There are no implicit retries, graders, repeats, baselines, or full suites.
 Target and verifier processes run in dedicated POSIX groups; evidence seals only
 after the group is quiescent.
+
+The runner seals the worker-final changed-file set, diff, and tree digest
+before any verifier process starts. Workspace assertions read those sealed
+worker bytes. Each command assertion starts from that same sealed tree in its
+own byte copy, so no command inherits another command's edit; a change inside a
+copy is attributed as verifier-derived, cannot turn the worker result into a
+clean `pass`, and the copy is removed after the attempt. Sealing a diff uses a
+disposable Git index copy, so the workspace index bytes and cached diff are
+never mutated. This is the protected-source/derived-output contract, not a
+claim of OS-level containment.
+
+A live worker workspace is not retained. When a case declares human-review
+requirements it may also declare `human_review_material`: exact
+workspace-relative file paths that the pending review actually needs. Globs,
+directories, symlinks, escaping paths, missing files, and over-limit sets are
+rejected. Declared files are copied atomically before any verifier runs into
+attempt-owned `review-material/` plus a manifest recording exact path, digest,
+byte size, and fixed limits; the manifest digest and status are bound into
+`verification.json` and the immutable receipt. A capture failure is an
+evidence-sealing error: no partial material set, no normal receipt, and a
+distinct `evidence-failed` attempt/run state rather than `termination-failed`.
+Cases with review requirements but no declared material rely on the standard
+attempt artifacts (`case.json`, `prompt.md`, `trace.jsonl`, `stderr.log`,
+`final-output.md`, `diff.patch`, `verification.json`). `keep_workspace=true`
+remains the only whole-workspace retention switch.
 
 ## V1 is migration input, not a runtime
 
@@ -260,11 +305,21 @@ acceptance, comparison superiority, or longitudinal reliability. See the
 [bundle report](BUNDLE_REPORT.md) and the screened
 [case study](case-studies/repository-operational-truth-audit.md).
 
+Separately, the subject published its own `v0.2.0` release on 2026-09-17 with a
+public forward receipt covering routing, Audit, and one-request Operate
+behavior, plus a maintainer-side source-owner gate. Field Lab records that as
+imported, dated observed evidence with explicit ceilings: it is not a Field Lab
+rerun, raw trace, or installed/discovery/fresh-host/publication proof. The
+[case study](case-studies/repository-operational-truth-audit.md) keeps the
+2026-08-30 history and adds the 2026-09-17/18 section.
+
 ## Development verification
 
 ```bash
 python3 -m unittest discover -s tests -p 'test*.py'
 python3 scripts/check_bundle.py
+skill-validate skills/pattern-intake
+skill-validate skills/skill-eval
 git diff --check
 ```
 

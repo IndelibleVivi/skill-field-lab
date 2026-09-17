@@ -65,7 +65,11 @@ A case keeps one prompt and bounded execution settings, and adds:
 - `workspace_assertions` for file and changed-file behavior;
 - `command_assertions` for bounded repository-owned commands;
 - `trace_assertions` for raw execution telemetry; and
-- `human_review_requirements[]` for declared non-deterministic judgment.
+- `human_review_requirements[]` for declared non-deterministic judgment; and
+- optional `human_review_material[]`, exact workspace-relative files a pending
+  review needs, which are sealed into attempt-owned `review-material/` before
+  verification. It is absent unless explicitly declared, so cases without it
+  keep their identity.
 
 `fixture/` and `expected/` are optional. A deterministic expected overlay is a
 self-test oracle when present; it is not required merely to make a case valid.

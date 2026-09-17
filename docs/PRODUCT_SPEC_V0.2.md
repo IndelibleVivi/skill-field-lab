@@ -5,6 +5,14 @@ Status: accepted implementation authority, 2026-08-30
 Amended 2026-09-10: PS-19 now requires exact per-requirement outcomes from
 the public review command when a receipt declares human-review requirements.
 
+Amended 2026-09-18: worker-final output is sealed before any verifier command
+runs, each command assertion gets a fresh copy of that sealed tree, and
+verifier-derived changes are attributed separately (PS-35); a live workspace is
+not retained and a case declares bounded `human_review_material` instead
+(PS-36); a read-only per-claim explanation command is part of the CLI (PS-37,
+PS-34); and requirement-outcome file reading is bounded and fail-closed
+(PS-19).
+
 Repository baseline: `23ef2a5` (`v0.1.0`)
 
 Product name: **Skill Field Lab**
@@ -183,8 +191,34 @@ The following v0.1 behavior is protected and must remain regression-covered:
   identity/version, controller digests, Python, Git, Codex, supported host, and
   Skill discovery path. It starts no target agent.
 - **PS-34** — V0.2 CLI includes `doctor`, `init`, `validate`, `list`, `selftest`,
-  `snapshot-git`, `observe`, `plan`, `run`, `promote`, and `migrate-v1`.
-  Superseded v1 command aliases are removed.
+  `snapshot-git`, `observe`, `review`, `explain`, `plan`, `run`, `promote`, and
+  `migrate-v1`. Superseded v1 command aliases are removed.
+- **PS-35** — The worker-final changed-file set, diff, and tree digest are sealed
+  before any verifier command runs. Workspace assertions read the sealed worker
+  tree. Each command assertion runs against its own disposable byte copy of that
+  same sealed tree; changes made there are attributed as verifier-derived and
+  cannot by themselves produce a `pass`. Sealing a diff uses a disposable Git
+  index and never mutates the workspace index or cached diff. This is a
+  worker-source/derived-output contract, not OS-level containment.
+- **PS-36** — A live worker workspace is not retained; `keep_workspace` remains
+  the only whole-workspace switch. A case that declares human-review
+  requirements may declare bounded `human_review_material` exact
+  workspace-relative files; they are copied atomically into attempt-owned
+  `review-material/` with a manifest whose path, digest, and status are bound
+  into `verification.json` and the immutable receipt. Missing, non-regular,
+  symlinked, escaping, unreadable, or over-limit material is an evidence-sealing
+  error that leaves no partial set and cannot yield `pass`. Cases without
+  declared material rely on the standard attempt artifacts. Since the worker
+  process is already quiescent, that failure is recorded as a distinct
+  `evidence-failed` attempt/run state, not `termination-failed`; process
+  termination and cleanup failures keep the `termination-failed` path.
+- **PS-37** — `fieldlab explain` is read-only. It recomputes one claim's
+  `supported`, `not-supported`, `inconclusive`, and `mixed` evidence from claims,
+  immutable receipts, and separate reviews; it does not read `claim.status` as
+  evidence or count a `PASS` as a conclusion, deduplicates the same receipt
+  across canonical locations by raw digest, treats disagreeing bound reviews as
+  conflicting rather than latest-wins, labels receipts without the worker-final
+  boundary marker `legacy-ambiguous`, and starts no target model.
 
 ## Non-goals
 
@@ -221,3 +255,19 @@ The following v0.1 behavior is protected and must remain regression-covered:
   controlled receipt whose claim ceiling is explicit before a v0.2 release.
   Creating a new live receipt still requires its own saved plan and invocation
   cap; source completion alone does not satisfy this gate.
+- **AC-11** — A regression in which a verifier repairs a protected file in its
+  own copy and exits zero stays non-passing: the sealed worker-final diff and
+  changed-file set still describe the worker bytes, the verifier change is
+  attributed, and a workspace assertion reads the sealed tree. A second
+  command assertion receives a fresh copy and still observes the worker bytes.
+- **AC-12** — A case with declared `human_review_material` seals exactly those
+  files into attempt-owned `review-material/` before verification, binds the
+  manifest digest into the receipt, and does not retain the whole workspace;
+  invalid declared material fails closed with no partial set. A case with review
+  requirements but no declared material keeps only the standard attempt
+  artifacts.
+- **AC-13** — `fieldlab explain` reports a claim's derivable evidence,
+  dimensions, subject identity, pending, failed, or conflicting review
+  requirements, duplicate receipt locations, legacy-ambiguous boundaries,
+  missing or digest-drifted artifacts, and next evidence gap without modifying
+  the lab.

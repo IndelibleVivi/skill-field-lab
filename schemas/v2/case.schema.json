@@ -44,7 +44,13 @@
         "reference_reads_include": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
       }
     },
-    "human_review_requirements": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+    "human_review_requirements": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "human_review_material": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    }
   },
   "$defs": {
     "workspace_assertion": {

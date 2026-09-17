@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 
 from .errors import ConfigError, ExecutionError
@@ -11,9 +12,17 @@ from .subjects import materialize_subject
 from .trees import validate_tree_symlinks
 
 
-def _run_git(argv: list[str], cwd: Path, *, timeout: int = 120) -> subprocess.CompletedProcess[str]:
+def _run_git(
+    argv: list[str],
+    cwd: Path,
+    *,
+    timeout: int = 120,
+    env_overrides: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
     env = os.environ.copy()
     env["PYTHONDONTWRITEBYTECODE"] = "1"
+    if env_overrides:
+        env.update(env_overrides)
     try:
         return subprocess.run(
             argv,
@@ -84,12 +93,38 @@ def changed_files(workspace: Path) -> list[str]:
 
 
 def capture_diff(workspace: Path) -> str:
-    _run_git(["git", "add", "-N", "--all"], workspace)
-    result = _run_git(
-        ["git", "diff", "--binary", "--no-ext-diff", "HEAD", "--"],
-        workspace,
-    )
+    """Return the binary working-tree diff without mutating the real index.
+
+    `git add -N` is needed so untracked files appear in `git diff HEAD`. It runs
+    against a disposable copy of the index selected through `GIT_INDEX_FILE`, so
+    the workspace's own index bytes and cached diff are never touched.
+    """
+    with tempfile.TemporaryDirectory(prefix="fieldlab-diff-index-") as raw:
+        index = Path(raw) / "index"
+        real_index = workspace / ".git" / "index"
+        overrides = {"GIT_INDEX_FILE": str(index)}
+        if real_index.is_file():
+            shutil.copy2(real_index, index)
+        else:
+            _run_git(["git", "read-tree", "HEAD"], workspace, env_overrides=overrides)
+        _run_git(["git", "add", "-N", "--all"], workspace, env_overrides=overrides)
+        result = _run_git(
+            ["git", "diff", "--binary", "--no-ext-diff", "HEAD", "--"],
+            workspace,
+            env_overrides=overrides,
+        )
     return result.stdout
+
+
+def copy_workspace(source: Path, target: Path) -> None:
+    """Copy a sealed worker workspace into a disposable verifier copy.
+
+    Verifier commands run against this copy so a command assertion cannot
+    rewrite the frozen worker-final bytes that the receipt seals.
+    """
+    if target.exists():
+        shutil.rmtree(target)
+    shutil.copytree(source, target, symlinks=True)
 
 
 def apply_expected(expected: Path, workspace: Path) -> None:

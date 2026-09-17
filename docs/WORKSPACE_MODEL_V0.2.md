@@ -115,6 +115,15 @@ Every saved plan binds:
 Immediately before live execution, Field Lab recomputes these inputs. Any
 difference rejects the run and names a new no-spend plan as the recovery path.
 
+This identity is the **exact raw tree digest** of the mounted source. Every file
+below the source belongs to it, including otherwise ignorable build residue;
+undeclared entries are never silently skipped. A subject may separately publish
+its own declared payload identity for its distributable files. That declaration
+belongs to the subject: v0.2 selects no Field Lab payload subset, hard-codes no
+subject file list, and records no payload-identity receipt field. Narrowing a
+tree to a declared payload would require one declaration governing validation,
+digest, materialization, and receipt provenance.
+
 ## Materialization safety
 
 - Level 1 materialization only reads subjects and writes disposable run state.
@@ -126,6 +135,50 @@ difference rejects the run and names a new no-spend plan as the recovery path.
 - A missing optional `fixture/` produces an empty disposable Git repository.
 - Field Lab never follows a remote URL, installs a referenced subject, or
   writes a lockfile into the subject repository.
+
+## Verifier copy
+
+After the worker process group is quiescent, the runner seals the worker-final
+changed-file set, diff, and tree digest. Workspace assertions read that sealed
+tree. Each command assertion then runs in its own disposable byte copy of the
+same sealed tree, so no command inherits another command's edits. Any derived
+change is attributed in `verification.json` and written as a separate
+`verifier-diff-<index>.patch` when non-empty; it cannot by itself produce a
+`pass`. Each copy is deleted after its command and is never sealed as evidence.
+Diff sealing uses a disposable Git index via `GIT_INDEX_FILE`, so the workspace
+index and cached diff stay untouched.
+
+## Retention and declared review material
+
+The attempt directory always keeps the content-light receipt plus sealed
+artifacts (`case.json`, `prompt.md`, `trace.jsonl`, `stderr.log`,
+`final-output.md`, `diff.patch`, `verification.json`, `metadata.json`, and any
+`verifier-diff-<index>.patch`).
+
+The live worker `workspace/` is large mutable state and is not retained. The
+plan-level `keep_workspace` switch is the only way to keep the whole workspace.
+
+A case that declares human-review requirements may declare exactly what the
+pending review needs through `human_review_material`: a unique list of exact
+workspace-relative file paths. The field is omitted from normalization when it
+is absent, so existing case identities and plans do not drift. Globs,
+directories, symlinks, escaping paths, missing files, non-regular files,
+unreadable files, and over-limit sets are rejected; the field is refused when
+the case declares no review requirements.
+
+After worker quiescence and before any verifier runs, the declared files are
+copied atomically into attempt-owned `review-material/` with a manifest that
+records the exact source path, digest, byte size, and the fixed runtime bounds.
+The manifest path, digest, and status are bound into `verification.json` and the
+immutable receipt. A capture failure is an evidence-sealing error: the staging
+tree and any installed material directory are removed, no normal receipt is
+written, and the attempt cannot pass. The attempt metadata records
+`state: evidence-failed`, `outcome: error`, and a bounded error reason, and the
+run summary records `evidence-failed`; process-termination and cleanup failures
+stay on the existing `termination-failed` path.
+
+Cases with review requirements but no declared material rely on the standard
+attempt artifacts rather than a retained workspace.
 
 ## Promotion boundary
 

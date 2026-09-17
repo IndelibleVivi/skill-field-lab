@@ -157,6 +157,11 @@ The runner preserves the v0.1 execution kernel:
    on bounded group termination.
 6. Evidence seals only after group quiescence. A termination failure cannot be
    represented as a normal pass.
+7. The worker-final changed-file set, diff, and tree digest are sealed before
+   any verifier command runs. Workspace assertions read those sealed bytes;
+   each command assertion runs in its own disposable copy of the same sealed
+   tree, and derived changes are attributed and cannot themselves produce a
+   `pass`. Diff sealing never mutates the workspace Git index.
 
 Windows live execution remains unsupported because v0.2 has no equivalent Job
 Object containment adapter.
@@ -178,6 +183,13 @@ Raw attempt artifacts stay in the lab. Receipts are content-light digests and
 bounded summaries. `promote` copies only selected candidates, claims, cases,
 receipts, reviews, and decisions. It never promotes the runtime, lab manifest,
 plans, or run workspaces.
+
+A live worker workspace is not retained; only `keep_workspace` keeps it whole.
+A case may declare bounded `human_review_material` files that are sealed
+atomically into attempt-owned `review-material/` for a pending review. `fieldlab
+explain` is a read-only per-claim view recomputed from claims, receipts, and
+reviews, including conflicting-review and legacy-boundary handling. Neither
+path starts a target model.
 
 ## Installation plane
 

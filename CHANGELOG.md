@@ -2,6 +2,45 @@
 
 ## Unreleased
 
+- Sealed the worker-final changed-file set, diff, and tree digest before any
+  verifier command runs. Workspace assertions now read the sealed worker tree
+  and every command assertion starts from its own fresh copy of that tree, so a
+  verifier repair cannot satisfy the worker-completion claim and no command
+  inherits another command's edit. Verifier-derived changes are attributed in
+  `verification.json` and `verifier-diff-<index>.patch`, and diff sealing now
+  uses a disposable Git index so the workspace index and cached diff are never
+  mutated.
+- Replaced whole-workspace retention with declared, bounded review material. A
+  case may declare `human_review_material` exact workspace-relative files that
+  are copied atomically into attempt-owned `review-material/` with a manifest
+  whose digest and status bind into `verification.json` and the receipt;
+  missing, symlinked, non-regular, escaping, or over-limit material fails
+  closed with no partial set. Cases with review requirements but no declared
+  material rely on the standard attempt artifacts, and `keep_workspace` remains
+  the only whole-workspace switch. The interim `reclaim` lifecycle is removed.
+  A capture failure after a quiescent worker is recorded as a distinct
+  `evidence-failed` attempt/run state with a bounded reason instead of
+  `termination-failed`; process cleanup failures keep the termination path.
+- Reject a FIFO or other non-regular requirement-outcome file by opening it
+  non-blocking before the regular-file check, so a special file cannot stall
+  the review command before the controlled configuration error is raised.
+- Hardened requirement-outcome file reading: invalid UTF-8, wrong root type,
+  non-string or unrecognized values, duplicate keys, oversized files, symlinked
+  files, and user-controlled symlinked ancestors all fail as controlled
+  configuration errors before any review record is written, while ordinary
+  absolute paths with a system symlink ancestor still work.
+- Added the read-only `fieldlab explain <manifest> --claim <id>` command, which
+  recomputes one claim's supported/unsupported/inconclusive evidence from
+  claims, immutable receipts, and separate reviews. It adds `mixed` for
+  disagreeing bound reviews instead of latest-wins, deduplicates the same
+  receipt across canonical locations by raw digest, labels receipts without the
+  worker-final boundary marker `legacy-ambiguous`, binds review digests to the
+  exact bytes validated, reports pending, failed, or conflicting requirements
+  and missing or digest-drifted artifacts, and names the smallest next evidence
+  gap without invoking a target model.
+- Documented the exact-tree subject identity versus a subject-owned declared
+  payload distinction, and added a dated 2026-09-17/18 Repo Truth Audit v0.2.0
+  forward-evidence section without rewriting the 2026-08-30 history.
 - Added exact per-requirement JSON input to the public `fieldlab review` command,
   with bounded-file, duplicate-key, receipt-key, and outcome-value validation;
   reviews remain separate from immutable receipts and start no target model.

@@ -162,6 +162,26 @@ Missing、extra、duplicate、malformed、symlinked 或超过大小限制的
 outcome input 都会 fail closed。Review command 不启动 target agent，也不修改
 receipt。
 
+## 先 explain claim，再决定是否相信它
+
+`fieldlab explain` 是 read-only 的。它从 claims、immutable receipts 和独立
+reviews 重新计算一个 claim 的 evidence view，不会直接相信手写的
+`claim.status`，也不会把 `PASS` 当作结论：
+
+```bash
+fieldlab explain /path/to/my-study/fieldlab.json --claim one-bounded-claim
+```
+
+报告会把 `supported`、`unsupported`、`inconclusive` 分开，并在 bound reviews
+彼此冲突时给出 `mixed`；在 receipt 有记录时显示 subject identity、sealed
+worker-final output、verifier attribution、declared review material 与
+retention。同一个 receipt 被复制到多个 canonical location 时会按 digest
+deduplicate；缺少 worker-final boundary marker 的 legacy receipt 会标记为
+`legacy-ambiguous`。报告还列出 pending、failed 或 conflicting 的 review
+requirements，以及 missing 或 digest-drifted 的 artifacts，并给出最小的 next
+evidence gap。`--json` 输出同样的结构，方便工具消费。它不启动 target model，
+也不修改 lab 或 subject。
+
 ## Spend 之前必须先 plan
 
 Plan 对 subject 是 read-only，也不会启动 target model：
@@ -193,6 +213,29 @@ fieldlab run /path/to/my-study/plans/one-plan.json \
 没有 implicit retry、grader、repeat、baseline 或 full suite。Target 与 verifier
 各自在 dedicated POSIX process group 中运行；只有 group quiescent 后才 seal
 evidence。
+
+Runner 会在任何 verifier process 启动之前，先 seal worker-final 的
+changed-file set、diff 与 tree digest。Workspace assertions 读取这些 sealed
+worker bytes；每条 command assertion 都从同一棵 sealed tree 的**独立** byte
+copy 开始，因此不会继承其他 command 的修改。copy 内的改动会被 attribution 为
+verifier-derived，不能把 worker 结果变成干净的 `pass`，copy 在 attempt 结束后
+删除。seal diff 使用 disposable Git index copy，因此不会改动 workspace 自身的
+index bytes 与 cached diff。这是 protected-source/derived-output contract，
+不是对 OS-level containment 的声明。
+
+Live worker workspace 不再默认保留。Case 声明了 human-review requirements 时，
+可以再声明 `human_review_material`：pending review 真正需要的、精确的
+workspace-relative 文件路径。Glob、目录、symlink、逃逸路径、缺失文件或超限集合
+都会被拒绝。Declared files 在任何 verifier 运行之前被原子复制到 attempt 自己的
+`review-material/`，并附带记录精确 path、digest、byte size 与固定 limits 的
+manifest；manifest digest 与 status 绑定进 `verification.json` 和 immutable
+receipt。capture 失败属于 evidence-sealing error：不会留下 partial material
+set，也不会产生正常 receipt，并会记录为独立的 `evidence-failed` attempt/run
+state（而不是 `termination-failed`）。只有 review requirements、没有 declared
+material 的 case 依赖标准 attempt artifacts（`case.json`、`prompt.md`、
+`trace.jsonl`、`stderr.log`、`final-output.md`、`diff.patch`、
+`verification.json`）。`keep_workspace=true` 仍然是唯一保留整个 workspace 的
+开关。
 
 ## V1 只是一条 migration input
 
@@ -253,11 +296,21 @@ installed / activated behavior、任意 repo、owner acceptance、comparison
 superiority 或 longitudinal reliability。详见 [bundle report](BUNDLE_REPORT.md)
 与经过筛选的 [case study](case-studies/repository-operational-truth-audit.md)。
 
+另外，subject 自己于 2026-09-17 发布了 `v0.2.0`，附带覆盖 routing、Audit 与
+one-request Operate 行为的公开 forward receipt，以及 maintainer 侧的
+source-owner gate。Field Lab 把它记为 imported、有日期的 observed evidence，并
+保留明确的 ceiling：它不是 Field Lab rerun、raw trace，也不是
+installed / discovery / fresh-host / publication proof。
+[case study](case-studies/repository-operational-truth-audit.md) 保留
+2026-08-30 的历史，并新增 2026-09-17/18 章节。
+
 ## 开发验证
 
 ```bash
 python3 -m unittest discover -s tests -p 'test*.py'
 python3 scripts/check_bundle.py
+skill-validate skills/pattern-intake
+skill-validate skills/skill-eval
 git diff --check
 ```
 

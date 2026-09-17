@@ -16,15 +16,33 @@ def utc_now() -> str:
 
 
 def read_json(path: Path) -> dict[str, Any]:
+    return read_json_with_digest(path)[0]
+
+
+def read_json_with_digest(path: Path) -> tuple[dict[str, Any], str]:
+    """Parse and hash one file from a single byte read.
+
+    Binding a review digest to a receipt must hash the exact bytes that were
+    validated, so the parse and the digest come from the same read.
+    """
     try:
-        value = json.loads(path.read_text(encoding="utf-8"))
+        raw = path.read_bytes()
     except FileNotFoundError as exc:
         raise ConfigError(f"missing JSON file: {path}") from exc
+    except OSError as exc:
+        raise ConfigError(f"unreadable JSON file: {path}: {exc}") from exc
+    digest = sha256_bytes(raw)
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise ConfigError(f"JSON file is not valid UTF-8: {path}: {exc}") from exc
+    try:
+        value = json.loads(text)
     except json.JSONDecodeError as exc:
         raise ConfigError(f"invalid JSON in {path}: {exc}") from exc
     if not isinstance(value, dict):
         raise ConfigError(f"JSON root must be an object: {path}")
-    return value
+    return value, digest
 
 
 def atomic_write_text(path: Path, text: str) -> None:

@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import json
 import io
+import os
+import subprocess
+import sys
 import tempfile
+import time
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
@@ -168,6 +172,116 @@ class ReviewRecordTests(unittest.TestCase):
                     output = root / f"{name}-review.json"
                     self.assertEqual(self.run_review(receipt, output, outcomes), 2)
                     self.assertFalse(output.exists())
+
+    def test_public_cli_rejects_invalid_utf8_and_wrong_root_types(self) -> None:
+        requirement = "coverage: inspect the diff"
+        variants = {
+            "invalid-utf8": b'{"caf\xe9": "supported"}',
+            "wrong-root-number": b"42",
+            "wrong-root-string": b'"supported"',
+            "wrong-root-null": b"null",
+        }
+        for name, payload in variants.items():
+            with self.subTest(variant=name), tempfile.TemporaryDirectory() as raw:
+                root = Path(raw)
+                receipt = self.write_receipt(root, [requirement])
+                outcomes = root / "outcomes.json"
+                outcomes.write_bytes(payload)
+                output = root / "review.json"
+                self.assertEqual(self.run_review(receipt, output, outcomes), 2)
+                self.assertFalse(output.exists())
+
+    def test_public_cli_rejects_non_string_or_unrecognized_outcomes(self) -> None:
+        requirement = "coverage: inspect the diff"
+        variants = {
+            "number": {"requirement": 3},
+            "array": {"requirement": ["supported"]},
+            "null": {"requirement": None},
+            "object": {"requirement": {"status": "supported"}},
+            "boolean": {"requirement": True},
+        }
+        for name, outcomes_value in variants.items():
+            with self.subTest(variant=name), tempfile.TemporaryDirectory() as raw:
+                root = Path(raw)
+                receipt = self.write_receipt(root, [requirement])
+                outcomes = root / "outcomes.json"
+                outcomes.write_text(json.dumps(outcomes_value), encoding="utf-8")
+                output = root / "review.json"
+                self.assertEqual(self.run_review(receipt, output, outcomes), 2)
+                self.assertFalse(output.exists())
+
+    def test_public_cli_rejects_symlinked_user_controlled_ancestor(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            requirement = "coverage: inspect the diff"
+            receipt = self.write_receipt(root, [requirement])
+            real = root / "real-outcomes"
+            real.mkdir()
+            target = real / "outcomes.json"
+            target.write_text(json.dumps({requirement: "supported"}), encoding="utf-8")
+            linked = root / "linked-outcomes"
+            linked.symlink_to(real, target_is_directory=True)
+            output = root / "review.json"
+            self.assertEqual(self.run_review(receipt, output, linked / "outcomes.json"), 2)
+            self.assertFalse(output.exists())
+
+    def test_public_cli_accepts_ordinary_absolute_path(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            requirement = "coverage: inspect the diff"
+            receipt = self.write_receipt(root, [requirement])
+            outcomes = root / "outcomes.json"
+            outcomes.write_text(json.dumps({requirement: "supported"}), encoding="utf-8")
+            self.assertTrue(outcomes.is_absolute())
+            output = root / "review.json"
+            self.assertEqual(self.run_review(receipt, output, outcomes), 0)
+            self.assertTrue(output.is_file())
+
+    @unittest.skipUnless(hasattr(os, "mkfifo"), "FIFO regression is POSIX-only")
+    def test_public_cli_rejects_a_fifo_outcome_file_promptly(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            requirement = "coverage: inspect the diff"
+            receipt = self.write_receipt(root, [requirement])
+            fifo = root / "outcomes.fifo"
+            os.mkfifo(fifo)
+            output = root / "review.json"
+            environment = dict(os.environ)
+            environment["PYTHONDONTWRITEBYTECODE"] = "1"
+            started = time.monotonic()
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "fieldlab",
+                    "review",
+                    str(ROOT / "examples/demo/fieldlab.json"),
+                    "--review-id",
+                    "fifo-review",
+                    "--receipt",
+                    str(receipt),
+                    "--independence",
+                    "separate-agent",
+                    "--judgment",
+                    "supported",
+                    "--rationale",
+                    "A FIFO must not block the review command.",
+                    "--requirement-outcomes",
+                    str(fifo),
+                    "--output",
+                    str(output),
+                ],
+                cwd=ROOT,
+                env=environment,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                timeout=15,
+            )
+            elapsed = time.monotonic() - started
+            self.assertEqual(completed.returncode, 2, completed.stderr)
+            self.assertFalse(output.exists())
+            self.assertLess(elapsed, 15)
 
 
 if __name__ == "__main__":

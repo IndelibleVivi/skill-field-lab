@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import platform
 import shutil
 from pathlib import Path
@@ -9,22 +10,33 @@ from typing import Any
 from . import __version__
 from .adapters.registry import create_adapter
 from .contracts import case_identity, load_cases, load_lab
-from .errors import ConfigError, ExecutionError
-from .io import atomic_write_json, atomic_write_text, canonical_json, read_json, sha256_text, utc_now
+from .errors import ConfigError, EvidenceError, ExecutionError
+from .io import (
+    atomic_write_json,
+    atomic_write_text,
+    canonical_json,
+    read_json,
+    sha256_file,
+    sha256_text,
+    tree_digest,
+    utc_now,
+)
 from .plan import planned_inputs, validate_plan
 from .receipts import synthetic_receipt
+from .review_material import LIMITS as REVIEW_MATERIAL_LIMITS, seal_review_material
 from .subjects import subject_identity
 from .trace import parse_trace
 from .verify import (
-    evaluate_command_assertions,
+    evaluate_command_assertion,
     evaluate_result_assertions,
     evaluate_trace_assertions,
     evaluate_workspace_assertions,
 )
-from .workspace import capture_diff, changed_files, prepare_workspace
+from .workspace import capture_diff, changed_files, copy_workspace, prepare_workspace
 
 
-TERMINAL_STATES = {"completed", "termination-failed"}
+TERMINAL_STATES = {"completed", "termination-failed", "evidence-failed"}
+EVIDENCE_ERROR_REASON_LIMIT = 500
 
 
 def _next_attempt_dir(repeat_dir: Path) -> Path:
@@ -244,6 +256,11 @@ def run_plan(
         summary["updated_at"] = utc_now()
         atomic_write_json(summary_path, summary)
         return 130
+    except EvidenceError:
+        summary["state"] = "evidence-failed"
+        summary["updated_at"] = utc_now()
+        atomic_write_json(summary_path, summary)
+        raise
     except ExecutionError:
         summary["state"] = "termination-failed"
         summary["updated_at"] = utc_now()
@@ -267,6 +284,33 @@ def _has_declared_deterministic_assertion(case: dict[str, Any]) -> bool:
         or case.get("command_assertions")
         or case.get("trace_assertions")
     )
+
+
+def _path_signature(root: Path, relative: str) -> str:
+    """Describe one workspace path without following a symlink."""
+    target = root / relative
+    if target.is_symlink():
+        return "symlink:" + os.readlink(target)
+    if target.is_file():
+        return "file:" + sha256_file(target)
+    if target.exists():
+        return "other"
+    return "absent"
+
+
+def _derived_changes(
+    worker_workspace: Path,
+    verifier_workspace: Path,
+    worker_changed_files: list[str],
+    verifier_changed_files: list[str],
+) -> list[str]:
+    """List paths whose bytes the verifier changed relative to worker output."""
+    candidates = sorted(set(worker_changed_files) | set(verifier_changed_files))
+    return [
+        path
+        for path in candidates
+        if _path_signature(worker_workspace, path) != _path_signature(verifier_workspace, path)
+    ]
 
 
 def run_attempt(
@@ -350,20 +394,120 @@ def run_attempt(
     trace_summary = parse_trace(attempt_dir / "trace.jsonl")
     final_response = trace_summary["final_message"]
     atomic_write_text(attempt_dir / "final-output.md", final_response + "\n")
+
+    # Seal worker-final bytes before any verifier process can observe or mutate
+    # them. The sealed diff and changed-file set describe only the worker.
+    worker_changed_files = changed_files(workspace)
+    worker_diff = capture_diff(workspace)
+    worker_tree_sha256 = tree_digest(workspace)
+    atomic_write_text(attempt_dir / "diff.patch", worker_diff)
+
+    review_requirements = list(case.get("human_review_requirements", []))
+    command_assertions = list(case.get("command_assertions", []))
+    keep_workspace = bool(plan["execution"]["keep_workspace"])
+    declared_material = case.get("human_review_material")
+    if declared_material is not None:
+        try:
+            review_material = seal_review_material(
+                workspace=workspace,
+                attempt_dir=attempt_dir,
+                declared=declared_material,
+            )
+        except EvidenceError as exc:
+            # The worker already reached a trustworthy terminal state; the
+            # failure is evidence construction, not process termination.
+            reason = str(exc)[:EVIDENCE_ERROR_REASON_LIMIT]
+            metadata["state"] = "evidence-failed"
+            metadata["outcome"] = "error"
+            metadata["error"] = reason
+            metadata["updated_at"] = utc_now()
+            atomic_write_json(attempt_dir / "metadata.json", metadata)
+            if not keep_workspace:
+                shutil.rmtree(workspace, ignore_errors=True)
+            raise
+    else:
+        review_material = {
+            "status": "not-declared",
+            "directory": None,
+            "manifest": None,
+            "manifest_sha256": None,
+            "files": [],
+            "total_bytes": 0,
+            "limits": dict(REVIEW_MATERIAL_LIMITS),
+        }
+
     result_results = evaluate_result_assertions(case, final_response)
+    # Workspace assertions read the sealed worker-final tree, never a verifier
+    # copy, so a verifier repair cannot satisfy them.
     workspace_results = evaluate_workspace_assertions(
         case,
         workspace,
         attempt_dir / "assertion-artifacts" / "workspace",
     )
-    command_results = evaluate_command_assertions(
-        case,
-        workspace,
-        attempt_dir / "assertion-artifacts" / "commands",
-    )
+    command_results: list[dict[str, Any]] = []
+    command_attribution: list[dict[str, Any]] = []
+    verifier_mutated = False
+    for index, assertion in enumerate(command_assertions):
+        copy = attempt_dir / "verifier-workspace" / f"command-{index:03d}"
+        try:
+            # Every command assertion starts from the same sealed worker-final
+            # tree in its own byte copy, so no command inherits another's edit.
+            copy_workspace(workspace, copy)
+            command_results.append(
+                evaluate_command_assertion(
+                    assertion,
+                    copy,
+                    attempt_dir / "assertion-artifacts" / "commands",
+                    index,
+                )
+            )
+            copy_changed_files = changed_files(copy)
+            mutated = tree_digest(copy) != worker_tree_sha256
+            derived_changed_files = _derived_changes(
+                workspace,
+                copy,
+                worker_changed_files,
+                copy_changed_files,
+            )
+            attribution: dict[str, Any] = {
+                "index": index,
+                "mutated_worker_output": mutated,
+                "derived_changed_files": derived_changed_files,
+            }
+            if mutated:
+                patch_name = f"verifier-diff-{index:03d}.patch"
+                diff = capture_diff(copy)
+                atomic_write_text(attempt_dir / patch_name, diff)
+                attribution["diff"] = patch_name
+                attribution["diff_sha256"] = sha256_text(diff)
+            command_attribution.append(attribution)
+            verifier_mutated = verifier_mutated or mutated
+        finally:
+            shutil.rmtree(copy, ignore_errors=True)
+    verifier_root = attempt_dir / "verifier-workspace"
+    if verifier_root.exists():
+        shutil.rmtree(verifier_root, ignore_errors=True)
     trace_results = evaluate_trace_assertions(case, trace_summary)
-    final_changed_files = changed_files(workspace)
-    atomic_write_text(attempt_dir / "diff.patch", capture_diff(workspace))
+
+    verifier_summary = {
+        "command_assertions": len(command_assertions),
+        "isolated_copy": bool(command_assertions),
+        "fresh_copy_per_command": True,
+        "mutated_worker_output": verifier_mutated,
+        "derived_changed_files": sorted(
+            {
+                path
+                for attribution in command_attribution
+                for path in attribution["derived_changed_files"]
+            }
+        ),
+        "worker_final_tree_sha256": worker_tree_sha256,
+        "commands": command_attribution,
+    }
+    retention = {
+        "workspace_retained": keep_workspace,
+        "reason": "keep-workspace" if keep_workspace else "not-retained",
+    }
     all_results = result_results + workspace_results + command_results + trace_results
     verification = {
         "schema_version": 2,
@@ -372,10 +516,23 @@ def run_attempt(
         "workspace_assertions": workspace_results,
         "command_assertions": command_results,
         "trace_assertions": trace_results,
-        "human_review_requirements": list(case.get("human_review_requirements", [])),
-        "changed_files": final_changed_files,
+        "human_review_requirements": review_requirements,
+        "changed_files": worker_changed_files,
+        "worker_final": {
+            "changed_files": worker_changed_files,
+            "tree_sha256": worker_tree_sha256,
+            "diff_sha256": sha256_text(worker_diff),
+        },
+        "review_material": review_material,
+        "verifier": verifier_summary,
+        "retention": retention,
         "trace_summary": trace_summary,
     }
+    # A verifier that had to mutate its copy cannot turn a worker result into a
+    # clean completion: the sealed worker bytes stay the only support surface.
+    verification["worker_completion_supported"] = (
+        verification["passed"] and not verifier_mutated
+    )
     atomic_write_json(attempt_dir / "verification.json", verification)
 
     if process_result.timed_out:
@@ -384,15 +541,18 @@ def run_attempt(
         outcome = "error"
     elif process_result.return_code != 0:
         outcome = "error"
-    elif not _has_declared_deterministic_assertion(case) and case.get("human_review_requirements"):
+    elif not _has_declared_deterministic_assertion(case) and review_requirements:
         outcome = "inconclusive"
-    elif verification["passed"]:
+    elif verification["worker_completion_supported"]:
         outcome = "pass"
+    elif verification["passed"]:
+        outcome = "inconclusive"
     else:
         outcome = "fail"
 
     metadata["state"] = "completed"
     metadata["outcome"] = outcome
+    metadata["retention"] = retention
     metadata["updated_at"] = utc_now()
     atomic_write_json(attempt_dir / "metadata.json", metadata)
     receipt = synthetic_receipt(
@@ -415,6 +575,6 @@ def run_attempt(
     )
     atomic_write_json(attempt_dir / "receipt.json", receipt)
 
-    if outcome == "pass" and not plan["execution"]["keep_workspace"]:
+    if not retention["workspace_retained"]:
         shutil.rmtree(workspace)
     return metadata

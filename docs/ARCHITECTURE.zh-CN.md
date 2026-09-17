@@ -155,6 +155,11 @@ Runner 保留受保护的 execution kernel：
    group termination。
 6. Evidence 只在 group quiescence 后 seal；termination failure 不能伪装成
    normal pass。
+7. 任何 verifier command 运行之前，worker-final 的 changed-file set、diff 与
+   tree digest 已经 seal。Workspace assertions 读取这些 sealed bytes；
+   每条 command assertion 都在同一棵 sealed tree 的独立 disposable copy 中
+   运行，其 derived changes 会被单独 attribution，并且不能自己产生 `pass`。
+   Diff sealing 不会改动 workspace 的 Git index。
 
 V0.2 没有等价的 Windows Job Object containment adapter，因此 Windows live
 execution 仍不受支持。
@@ -176,6 +181,12 @@ Raw attempt artifacts 留在 lab 中。Receipts 只保存 content-light digests 
 bounded summaries。`promote` 只复制 selected candidates、claims、cases、
 receipts、reviews 与 decisions；不会复制 runtime、lab manifest、plans 或 run
 workspaces。
+
+live worker workspace 不再保留，只有 `keep_workspace` 会保留整个 workspace。
+Case 可以声明有界的 `human_review_material` 文件，它们会在 verifier 运行前被
+原子 seal 进 attempt 自己的 `review-material/`。`fieldlab explain` 是 read-only
+的 per-claim view，从 claims、receipts 与 reviews 重新计算，并处理 conflicting
+reviews 与 legacy boundary。两条路径都不启动 target model。
 
 ## Installation plane
 

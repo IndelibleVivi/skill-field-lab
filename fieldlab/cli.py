@@ -2,17 +2,20 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import stat
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 from .contracts import load_cases, load_lab
 from .doctor import doctor_report
+from .explain import explain_claim, render_explanation
 from .errors import ConfigError, FieldLabError
 from .io import atomic_write_json, read_json
 from .lab import initialize_lab, migrate_v1, promote_lab
 from .plan import build_plan
-from .receipts import human_review_record, observed_receipt_v2
+from .receipts import CLAIM_ASSESSMENTS, human_review_record, observed_receipt_v2
 from .records import validate_claim, validate_record_tree
 from .runner import run_plan
 from .selftest import selftest_lab
@@ -47,13 +50,66 @@ def _require_unique_artifacts(values: list[tuple[str, Path]]) -> dict[str, Path]
     return artifacts
 
 
+def _absolute_user_path(path: Path) -> Path:
+    expanded = path.expanduser()
+    if not expanded.is_absolute():
+        expanded = Path.cwd() / expanded
+    return Path(os.path.normpath(str(expanded)))
+
+
+def _reject_symlinked_user_ancestor(path: Path) -> None:
+    """Refuse a user-controlled symlinked ancestor without rejecting `/var` style layout.
+
+    A symlink that is a direct child of the filesystem root expresses the host's
+    own layout (for example macOS `/var` -> `private/var`, or `/tmp`). Any deeper
+    symlinked directory is user-controlled content and must not redirect the file
+    Field Lab reads.
+    """
+    for parent in path.parents:
+        if parent.parent == parent or parent.parent == Path(parent.anchor):
+            continue
+        if parent.is_symlink():
+            raise ConfigError(
+                "requirement outcomes must not sit below a user-controlled "
+                f"symlinked directory: {parent}"
+            )
+
+
 def _read_requirement_outcomes(path: Path) -> dict[str, str]:
-    path = path.expanduser()
-    if (path.is_symlink() or not path.is_file()
-            or path.stat().st_size > MAX_REQUIREMENT_OUTCOMES_BYTES):
+    target = _absolute_user_path(path)
+    _reject_symlinked_user_ancestor(target)
+    if target.is_symlink():
         raise ConfigError(
             "requirement outcomes must be a bounded regular JSON file"
         )
+    # Open non-blocking so a FIFO or other non-regular file cannot stall the
+    # command before the regular-file check below rejects it.
+    open_flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+    try:
+        handle = os.open(target, open_flags)
+    except OSError as exc:
+        raise ConfigError(
+            "requirement outcomes must be a bounded regular JSON file"
+        ) from exc
+    try:
+        with os.fdopen(handle, "rb") as stream:
+            if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
+                raise ConfigError(
+                    "requirement outcomes must be a bounded regular JSON file"
+                )
+            raw = stream.read(MAX_REQUIREMENT_OUTCOMES_BYTES + 1)
+    except OSError as exc:
+        raise ConfigError(f"requirement outcomes could not be read: {exc}") from exc
+    if len(raw) > MAX_REQUIREMENT_OUTCOMES_BYTES:
+        raise ConfigError(
+            "requirement outcomes must be a bounded regular JSON file"
+        )
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise ConfigError(
+            f"requirement outcomes must be valid UTF-8: {exc}"
+        ) from exc
 
     def unique_object(pairs):
         result = {}
@@ -64,13 +120,17 @@ def _read_requirement_outcomes(path: Path) -> dict[str, str]:
         return result
 
     try:
-        value = json.loads(
-            path.read_text(encoding="utf-8"), object_pairs_hook=unique_object
-        )
+        value = json.loads(text, object_pairs_hook=unique_object)
     except json.JSONDecodeError as exc:
         raise ConfigError(f"invalid requirement outcomes JSON: {exc}") from exc
     if not isinstance(value, dict):
         raise ConfigError("requirement outcomes JSON root must be an object")
+    for key, outcome in value.items():
+        if not isinstance(outcome, str) or outcome not in CLAIM_ASSESSMENTS:
+            raise ConfigError(
+                f"requirement outcome for {key!r} must be supported, "
+                "not-supported, or inconclusive"
+            )
     return value
 
 
@@ -141,6 +201,14 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     review.add_argument("--output", type=Path)
+
+    explain = subparsers.add_parser(
+        "explain",
+        help="Read-only per-claim evidence explanation from receipts and reviews",
+    )
+    explain.add_argument("manifest", type=Path)
+    explain.add_argument("--claim", required=True)
+    explain.add_argument("--json", action="store_true")
 
     plan = subparsers.add_parser("plan", help="Build an immutable, no-spend execution plan")
     plan.add_argument("manifest", type=Path)
@@ -364,6 +432,16 @@ def command_review(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_explain(args: argparse.Namespace) -> int:
+    explanation = explain_claim(args.manifest, args.claim)
+    if args.json:
+        print(json.dumps(explanation, indent=2, ensure_ascii=False, sort_keys=True))
+        return 0
+    print(render_explanation(explanation))
+    print("Target-agent invocations: 0")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -403,6 +481,8 @@ def main(argv: list[str] | None = None) -> int:
             return command_observe(args)
         if args.command == "review":
             return command_review(args)
+        if args.command == "explain":
+            return command_explain(args)
         if args.command == "promote":
             result = promote_lab(
                 source_lab=args.source_lab,

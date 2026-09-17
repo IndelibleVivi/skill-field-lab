@@ -8,7 +8,7 @@ These actions start no target model:
 
 - loading `pattern-intake` or explicit `skill-eval`;
 - `doctor`, `init`, `validate`, `list`, `selftest`, `snapshot-git`, `observe`,
-  `review`, `plan`, `promote`, and `migrate-v1`;
+  `review`, `explain`, `plan`, `promote`, and `migrate-v1`;
 - installation, upgrade preflight, backup, and doctor checks;
 - unit tests and CI; and
 - reading plans, receipts, reviews, or decisions.

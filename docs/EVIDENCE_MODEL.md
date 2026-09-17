@@ -81,6 +81,33 @@ Final response is first-class. A valid case may change no file and have no
 fixture. `expected/` exists only when a deterministic known-fail/known-pass
 oracle is useful.
 
+## Worker output and verifier derivation
+
+An attempt has two distinct byte surfaces:
+
+- the **worker-final** surface: the changed-file set, diff, and tree digest
+  captured immediately after the worker process group is quiescent and before
+  any verifier command runs; and
+- the **verifier** surface: each deterministic command assertion runs in its
+  own disposable byte copy of that sealed tree.
+
+Workspace and file assertions read the sealed worker-final tree, so a verifier
+cannot satisfy them by repairing the artifact under test. `diff.patch` and the
+receipt's `changed_files` describe worker bytes only. Every command assertion
+starts from the same sealed tree, so no command inherits another command's edit.
+A change inside a copy is attributed in the verification record and, when
+non-empty, written as a separate `verifier-diff-<index>.patch`; the copy is
+removed after the attempt. Because a verifier that had to mutate its own copy is
+not a clean oracle, such an attempt cannot be sealed as `pass`; it becomes
+`inconclusive` unless a declared assertion already failed on the sealed worker
+bytes. Sealing a diff uses a disposable Git index selected through
+`GIT_INDEX_FILE`, so the workspace's own index bytes and cached diff are never
+mutated.
+
+This protects the actual worker-source/derived-output contract. It is not a
+claim that verifier commands are contained by the operating system: they still
+run with the case's declared sandbox and host tools.
+
 ## Receipt and review boundary
 
 An attempt receipt records identity, subject scope, selection evidence,
@@ -97,6 +124,74 @@ requires one outcome for every exact requirement and rejects missing, extra, or
 unsupported values. A receipt with no declared requirements uses an empty
 mapping. This per-requirement record does not make the review rationale
 self-authenticating or expand the claim beyond the inspected evidence.
+
+Requirement-outcome input is read as a bounded regular file: invalid UTF-8,
+duplicate keys, a non-object root, non-string or unrecognized values, an
+oversized file, a symlinked file, or a file below a user-controlled symlinked
+directory all fail as controlled configuration errors before any review record
+is written. The file is opened non-blocking when the platform supports it and
+then required to be regular, so a FIFO or other non-regular file is rejected
+instead of stalling the command. Ordinary absolute paths are accepted even when
+a system ancestor such as macOS `/var` is a symlink.
+
+`fieldlab explain` computes a per-claim view from claims, receipts, and separate
+reviews. It never reads `claim.status` as evidence and never counts a `PASS` as
+a conclusion. It reports `supported`, `not-supported`, `inconclusive`, and
+`mixed` separately, deduplicates the same receipt copied to several canonical
+locations by raw receipt SHA-256 while keeping every location, and never picks a
+latest winning review: bound reviews that disagree in judgment or in any exact
+requirement outcome mark that receipt conflicting and the claim aggregate
+`mixed`. Reviewer independence is displayed, not used as automatic weighting.
+A required review that is absent stays pending, and digest-mismatched reviews do
+not contribute. Attempt receipts that lack the worker-final boundary marker stay
+readable but are labeled `legacy-ambiguous`; they are never described as sealed
+before a verifier, and they cannot carry a claim to `supported` on their own.
+The view also shows subject identity when the receipt recorded it, missing or
+digest-drifted artifacts, and the smallest next evidence gap. It is read-only
+and starts no target model.
+
+## Retention and lifecycle
+
+Raw attempt evidence lives in the attempt directory as a content-light receipt
+plus sealed artifacts. A live worker workspace is large mutable state and is
+not retained; `keep_workspace=true` is the only whole-workspace switch.
+
+When a case declares human-review requirements it may also declare
+`human_review_material`: a unique list of exact workspace-relative file paths.
+Globs, directories, symlinks, escaping paths, missing files, and over-limit
+sets are rejected, and the case contract refuses the field without declared
+review requirements. After worker quiescence and before any verifier runs, the
+declared files are copied atomically into attempt-owned `review-material/` plus
+a manifest recording exact path, digest, byte size, and the fixed runtime
+limits. The manifest digest and status are bound into `verification.json` and
+the immutable receipt. A capture failure is an evidence-sealing error: no
+partial material set remains and no normal receipt is written. Because the
+worker process was already quiescent, the attempt metadata records
+`state: evidence-failed`, `outcome: error`, and a bounded error reason, and the
+run summary records `evidence-failed` rather than `termination-failed`; a
+process-termination or cleanup failure keeps the existing `termination-failed`
+path.
+
+Cases with review requirements but no declared material rely on the standard
+attempt artifacts (`case.json`, `prompt.md`, `trace.jsonl`, `stderr.log`,
+`final-output.md`, `diff.patch`, `verification.json`).
+
+## Subject identity and declared payloads
+
+Subject identity is the exact raw tree digest of the mounted `local-path`,
+`local-git-ref`, or `snapshot` source. It deliberately keeps exact-tree
+meaning: every file below the source, including otherwise ignorable build
+residue, is part of the digest, and undeclared entries are never silently
+ignored.
+
+A subject may separately publish its own declared payload, such as an explicit
+distributable file list with its own digest. That is a subject-owned
+declaration about the subject's release surface. V0.2 adds no Field Lab payload
+selection, no hard-coded subject file list, and no payload-identity receipt
+field; narrowing a subject tree to a payload would need one declaration
+governing validation, digest, materialization, and receipt provenance. When
+present, a subject's declared payload is recorded as imported subject evidence,
+not as a Field Lab subject identity.
 
 ## Claim ceilings
 

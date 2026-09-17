@@ -146,9 +146,12 @@ def _evaluate_assertion_list(
     assertions: list[dict[str, Any]],
     workspace: Path,
     assertion_artifacts: Path,
+    *,
+    index_offset: int = 0,
 ) -> list[dict[str, Any]]:
     results: list[dict[str, Any]] = []
     for index, assertion in enumerate(assertions):
+        artifact_index = index + index_offset
         assertion_type = assertion["type"]
         if assertion_type == "changed_files_exact":
             actual = changed_files(workspace)
@@ -165,7 +168,7 @@ def _evaluate_assertion_list(
             continue
 
         if assertion_type == "command":
-            command_dir = assertion_artifacts / f"command-{index:03d}"
+            command_dir = assertion_artifacts / f"command-{artifact_index:03d}"
             env = os.environ.copy()
             env["PYTHONDONTWRITEBYTECODE"] = "1"
             execution = run_bounded_process(
@@ -264,6 +267,25 @@ def evaluate_command_assertions(
         workspace,
         assertion_artifacts,
     )
+
+
+def evaluate_command_assertion(
+    assertion: dict[str, Any],
+    workspace: Path,
+    assertion_artifacts: Path,
+    index: int,
+) -> dict[str, Any]:
+    """Evaluate exactly one command assertion against one isolated workspace."""
+    normalized = assertion if assertion.get("type") == "command" else {
+        "type": "command", **assertion
+    }
+    results = _evaluate_assertion_list(
+        [normalized],
+        workspace,
+        assertion_artifacts,
+        index_offset=index,
+    )
+    return results[0]
 
 
 def evaluate_file_assertions(
