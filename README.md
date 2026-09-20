@@ -36,15 +36,7 @@ adapter. What that verification covers, and what it does not, is in
 
 ## The ordinary path
 
-```text
-external source
-  -> Pattern Intake          study + decision (no target-agent invocation, no subject write)
-       -> ADOPT | ADAPT | REJECT | DEFER | ALREADY COVERED
-       -> one unresolved claim, only when stronger evidence would change the decision
-            -> Field Trial  inspect / observe existing work first
-                 -> smallest no-spend plan if still unresolved
-                 -> explicit capped live run only when separately authorized
-```
+[![Study an external idea with Pattern Intake and make a decision; use Field Trial only when more evidence could change it. Live runs require a saved plan, approval and an explicit invocation limit.](docs/assets/decision-path.en.svg)](docs/assets/decision-path.en.svg)
 
 **Pattern Intake** (`$pattern-intake`) pins an external source, distils one
 portable mechanism, names the local problem it would solve, picks the lowest

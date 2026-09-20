@@ -16,6 +16,11 @@ linked contracts remain authoritative. 阅读顺序服务你的问题，不改�
 | Migrate an old pack · 迁移 v1 pack | [V1-to-v2 migration](MIGRATION_V1_TO_V2.md) → [Schema delta](SCHEMA_DELTA_V1_TO_V2.md) |
 | Check a distributed version · 核对分发版本 | [Current state](CURRENT_STATE.md) → [Changelog](../CHANGELOG.md) → [Packaging](PACKAGING.md) |
 
+README overview artwork: [English SVG](assets/decision-path.en.svg) /
+[中文 SVG](assets/decision-path.zh-CN.svg). These are editable, standalone
+illustrations of the ordinary path; keep both language editions in sync.
+中英两图用于解释常规路径，更新流程时应一起维护。
+
 ## Where truth lives · 各类事实的权威来源
 
 | Surface | Owns · 负责什么 |

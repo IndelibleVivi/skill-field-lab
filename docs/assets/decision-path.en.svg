@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="650" viewBox="0 0 1000 650" role="img" aria-labelledby="title description" lang="en">
+  <title id="title">Skill Field Lab: study first, then decide</title>
+  <desc id="description">Study an external mechanism and decide whether it belongs in your system. Pattern Intake can end with adopt, adapt, reject, defer, or already covered, without a lab. Explicitly invoke Field Trial only for an open question that could change the decision. Use existing work first; plan a small trial only if still needed. Live runs need a saved plan, your approval, and an explicit invocation limit.</desc>
+  <!-- Editable README overview. Designed for display at 640px wide or larger. -->
+  <defs>
+    <style>
+      text { font-family: 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif; fill: #252A31; }
+      .meta { font-size: 18px; letter-spacing: 1.2px; fill: #63646A; }
+      .head { font-family: Georgia, 'Songti SC', SimSun, serif; font-size: 41px; font-weight: 400; }
+      .sub { font-size: 22px; fill: #64666C; }
+      .name { font-family: Georgia, 'Songti SC', SimSun, serif; font-size: 30px; font-weight: 400; }
+      .body { font-size: 22px; fill: #4F535B; }
+      .small { font-size: 20.5px; fill: #4F535B; }
+      .accent { fill: #3A52C3; }
+    </style>
+  </defs>
+  <rect width="1000" height="650" fill="#FBFAF7"/>
+  <g id="structure">
+    <path d="M48 65H952" stroke="#D6D4CE"/>
+    <rect x="48" y="428" width="904" height="174" rx="6" fill="#EEF0FA"/>
+    <path d="M361 452V578" stroke="#C5CCE8"/>
+  </g>
+  <g id="sufficient-evidence-route" fill="none" stroke="#3A52C3" stroke-width="2" stroke-linejoin="round">
+    <path d="M478 286H626M617 280L626 286L617 292"/>
+  </g>
+  <g id="optional-evidence-route" fill="none" stroke="#7F879D" stroke-width="1.8">
+    <path d="M234 381V417" stroke-dasharray="4 5"/>
+    <path d="M228 409L234 417L240 409"/>
+  </g>
+  <g id="evidence-return-route" fill="none" stroke="#3A52C3" stroke-width="1.8">
+    <path d="M800 428V405M794 413L800 405L806 413"/>
+  </g>
+  <g id="masthead">
+    <text x="48" y="43" class="meta" data-readability="supporting">SKILL FIELD LAB</text>
+    <text x="952" y="43" text-anchor="end" class="meta" data-readability="supporting">STUDY → DECIDE</text>
+    <text x="48" y="129" class="head" data-readability="critical">Is this idea worth keeping?</text>
+    <text x="50" y="169" class="sub">Study the mechanism before bringing it into your system.</text>
+  </g>
+  <g id="pattern-intake">
+    <g id="source-study-icon" transform="translate(60 235)" fill="none" stroke="#3A52C3" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M0 5L46 0L59 67L13 72Z" fill="#EAEAF5" stroke="none"/>
+      <path d="M13 0H49L61 13V68H13Z" fill="#FBFAF7"/>
+      <path d="M49 0V13H61M23 24H42M23 34H36M23 45H30"/>
+      <circle cx="51" cy="47" r="14" fill="#FBFAF7"/>
+      <path d="M61 57L75 72" stroke-width="3"/>
+    </g>
+    <text x="164" y="252" class="small accent">01 / STUDY</text>
+    <text x="164" y="290" class="name">Pattern Intake</text>
+    <text x="164" y="327" class="body">Extract a reusable mechanism.</text>
+    <text x="164" y="360" class="small">Check local fit; no lab needed.</text>
+  </g>
+  <g id="route-label">
+    <text x="551" y="265" text-anchor="middle" class="small accent">Enough evidence</text>
+  </g>
+  <g id="decision">
+    <text x="664" y="252" class="small accent">02 / DECIDE</text>
+    <text x="664" y="290" class="name">You decide.</text>
+    <text x="664" y="327" class="body">Adopt, adapt, or defer.</text>
+    <text x="664" y="358" class="small">Reject or already covered</text>
+    <text x="664" y="385" class="small">also counts as a result.</text>
+  </g>
+  <g id="field-trial" data-readability-background="#EEF0FA">
+    <g id="trial-condition">
+      <text x="72" y="465" class="small accent">Only if an open question</text>
+      <text x="72" y="493" class="small accent">could change your decision</text>
+      <text x="72" y="539" class="name">Field Trial</text>
+      <text x="72" y="568" class="small">By explicit invocation only</text>
+    </g>
+    <g id="existing-evidence-first">
+      <text x="389" y="467" class="body">Use existing work first.</text>
+      <text x="389" y="502" class="small">Plan a small trial only if still needed.</text>
+    </g>
+    <g id="live-authorization">
+      <text x="389" y="538" class="small">Live runs need a saved plan, your approval,</text>
+      <text x="389" y="568" class="small">and an explicit invocation limit.</text>
+    </g>
+  </g>
+</svg>

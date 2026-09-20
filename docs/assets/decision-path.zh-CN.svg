@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="650" viewBox="0 0 1000 650" role="img" aria-labelledby="title description" lang="zh-CN">
+  <title id="title">Skill Field Lab：先研究，再决定</title>
+  <desc id="description">研究一个外部机制，判断它是否适合自己的系统。Pattern Intake 可以不建 lab，直接以采纳、改造、拒绝、暂缓或已覆盖收尾。只有未决问题会改变决定时，才显式调用 Field Trial，先看已有工作，必要时再规划小试验。真实调用需要保存的计划、你的授权和明确的调用次数上限。</desc>
+  <!-- Editable README overview. Designed for display at 640px wide or larger. -->
+  <defs>
+    <style>
+      text { font-family: 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif; fill: #252A31; }
+      .meta { font-size: 18px; letter-spacing: 1.2px; fill: #63646A; }
+      .head { font-family: Georgia, 'Songti SC', SimSun, serif; font-size: 41px; font-weight: 400; }
+      .sub { font-size: 22px; fill: #64666C; }
+      .name { font-family: Georgia, 'Songti SC', SimSun, serif; font-size: 30px; font-weight: 400; }
+      .body { font-size: 22px; fill: #4F535B; }
+      .small { font-size: 20.5px; fill: #4F535B; }
+      .accent { fill: #3A52C3; }
+    </style>
+  </defs>
+  <rect width="1000" height="650" fill="#FBFAF7"/>
+  <g id="structure">
+    <path d="M48 65H952" stroke="#D6D4CE"/>
+    <rect x="48" y="428" width="904" height="174" rx="6" fill="#EEF0FA"/>
+    <path d="M361 452V578" stroke="#C5CCE8"/>
+  </g>
+  <g id="sufficient-evidence-route" fill="none" stroke="#3A52C3" stroke-width="2" stroke-linejoin="round">
+    <path d="M478 286H626M617 280L626 286L617 292"/>
+  </g>
+  <g id="optional-evidence-route" fill="none" stroke="#7F879D" stroke-width="1.8">
+    <path d="M234 381V417" stroke-dasharray="4 5"/>
+    <path d="M228 409L234 417L240 409"/>
+  </g>
+  <g id="evidence-return-route" fill="none" stroke="#3A52C3" stroke-width="1.8">
+    <path d="M800 428V383M794 391L800 383L806 391"/>
+  </g>
+  <g id="masthead">
+    <text x="48" y="43" class="meta" data-readability="supporting">SKILL FIELD LAB</text>
+    <text x="952" y="43" text-anchor="end" class="meta" data-readability="supporting">STUDY → DECIDE</text>
+    <text x="48" y="129" class="head" data-readability="critical">这个外部想法，值得留下吗？</text>
+    <text x="50" y="169" class="sub">先读懂机制，再决定它是否适合自己的系统。</text>
+  </g>
+  <g id="pattern-intake">
+    <g id="source-study-icon" transform="translate(60 235)" fill="none" stroke="#3A52C3" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M0 5L46 0L59 67L13 72Z" fill="#EAEAF5" stroke="none"/>
+      <path d="M13 0H49L61 13V68H13Z" fill="#FBFAF7"/>
+      <path d="M49 0V13H61M23 24H42M23 34H36M23 45H30"/>
+      <circle cx="51" cy="47" r="14" fill="#FBFAF7"/>
+      <path d="M61 57L75 72" stroke-width="3"/>
+    </g>
+    <text x="164" y="252" class="small accent">01 / 研究</text>
+    <text x="164" y="290" class="name">Pattern Intake</text>
+    <text x="164" y="327" class="body">提炼机制 · 对照本地需要</text>
+    <text x="164" y="360" class="small">可以在这里结束，不必创建 lab。</text>
+  </g>
+  <g id="route-label">
+    <text x="551" y="265" text-anchor="middle" class="small accent">证据足够</text>
+  </g>
+  <g id="decision">
+    <text x="664" y="252" class="small accent">02 / 决定</text>
+    <text x="664" y="290" class="name">由你决定去留</text>
+    <text x="664" y="327" class="body">采纳、改造，或暂缓。</text>
+    <text x="664" y="360" class="small">拒绝或“已覆盖”，也算完成。</text>
+  </g>
+  <g id="field-trial" data-readability-background="#EEF0FA">
+    <g id="trial-condition">
+      <text x="72" y="467" class="small accent">只有疑问会改变决定时</text>
+      <text x="72" y="508" class="name">Field Trial</text>
+      <text x="72" y="545" class="small">由你显式调用</text>
+    </g>
+    <g id="existing-evidence-first">
+      <text x="389" y="467" class="body">先看已有工作，必要时才规划试验。</text>
+      <text x="389" y="502" class="small">选择最小但足够的证据。</text>
+    </g>
+    <g id="live-authorization">
+      <text x="389" y="538" class="small">真实调用：已保存的计划、你的授权，</text>
+      <text x="389" y="568" class="small">以及明确的调用次数上限。</text>
+    </g>
+  </g>
+</svg>

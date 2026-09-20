@@ -10,8 +10,8 @@ reading paths or the [Product spec](PRODUCT_SPEC_V0.2.md) for accepted behavior.
   was published on 2026-09-20 from release commit `b5dfa07`. Its changes are
   recorded in the [changelog](../CHANGELOG.md).
 - The working source retains that runtime and now curates the bilingual reader
-  entry, architecture, documentation map and historical reading path. This
-  documentation revision does not replace the tagged archive or publish a new
+  entry, SVG overviews, architecture, documentation map and historical reading
+  path. This documentation revision does not replace the tagged archive or publish a new
   release.
 - Product/workspace/evidence contracts and schema v2 remain unchanged by this
   curation. [Architecture](ARCHITECTURE.md) explains their relationships.
@@ -21,7 +21,7 @@ reading paths or the [Product spec](PRODUCT_SPEC_V0.2.md) for accepted behavior.
 | Layer | What is established | Limit |
 | --- | --- | --- |
 | V0.2.1 release source | [Bundle report](../BUNDLE_REPORT.md) and [test report](../TEST_REPORT.txt): 83 deterministic tests, package compilation, both bundled example validations/selftests and controller validation | Fake adapters; zero real target invocations or LLM graders |
-| Documentation curation | Local Markdown targets and bilingual diagram topology checked; all six Mermaid diagrams rendered and visually inspected; the unchanged runtime passed the 83-test bundle check again | Ordinary-work verification, not a measured reader-comprehension or Curator-benefit result |
+| Documentation curation | Local Markdown targets and bilingual diagram topology checked; all six Mermaid diagrams rendered and visually inspected; both README SVGs checked at 1000px and 640px, including grayscale; the unchanged runtime passed the 83-test bundle check again | Ordinary-work verification, not a measured reader-comprehension or Curator-benefit result |
 | Published release | The linked v0.2.1 release and publication date were read back on 2026-09-20 | Publication does not establish installation or use |
 | Installation and cross-subject integration | The bundle report retains dated v0.2.0 transactional-install, doctor and disposable external-lab evidence | Historical acceptance, not a v0.2.1 installation claim |
 | Live target behavior | One 2026-08-30 ROT canary and a separate digest-bound review; later imported observations are distinguished in the [case study](../case-studies/repository-operational-truth-audit.md) | Supports only its pinned claim; no v0.2.1 live rerun or comparative-benefit claim |

@@ -34,15 +34,7 @@ Python 3.10+ 标准库，`codex-exec` 是唯一实现好的 adapter。这次验�
 
 ## 常规路径
 
-```text
-external source
-  -> Pattern Intake          研究 + 决策（不额外启动 target agent、不写 subject）
-       -> ADOPT | ADAPT | REJECT | DEFER | ALREADY COVERED
-       -> 只有一个会改变决策的 unresolved claim
-            -> Field Trial  先 inspect / observe 现有工作
-                 -> 仍不足时才做最小 no-spend plan
-                 -> 另行授权后才跨过 capped live boundary
-```
+[![先用 Pattern Intake 研究外部想法并作出决定；只有补充证据会改变决定时，才显式调用 Field Trial。真实调用需要保存的计划、授权和明确次数上限。](docs/assets/decision-path.zh-CN.svg)](docs/assets/decision-path.zh-CN.svg)
 
 **Pattern Intake**（`$pattern-intake`）pin 一个外部 source，提炼一个可移植机制，
 指出它对应哪个 local problem，选择最低的 landing plane，并以 `ADOPT`、`ADAPT`、
