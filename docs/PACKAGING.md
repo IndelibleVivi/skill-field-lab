@@ -1,7 +1,6 @@
 # Packaging and distribution
 
-Status: latest published packaging is v0.2.0; current source is an unreleased
-0.2.1 candidate. The archive names below describe the published v0.2.0 assets.
+Status: v0.2.1 release packaging contract. The v0.2.0 assets remain historical.
 
 The supported local distribution surface is the stdlib-only transactional
 installer:
@@ -23,12 +22,12 @@ The GitHub Release distribution consists of an exact tagged source archive and
 its checksum:
 
 ```text
-skill-field-lab-v0.2.0.zip
-skill-field-lab-v0.2.0.zip.sha256
+skill-field-lab-v0.2.1.zip
+skill-field-lab-v0.2.1.zip.sha256
 ```
 
-The archive is generated from tag `v0.2.0` with the top-level prefix
-`skill-field-lab-v0.2.0/`. Verify the adjacent checksum before extraction;
+The archive is generated from tag `v0.2.1` with the top-level prefix
+`skill-field-lab-v0.2.1/`. Verify the adjacent checksum before extraction;
 after extraction, `shasum -a 256 -c BUNDLE_MANIFEST.sha256` and
 `python3 scripts/check_bundle.py` validate tracked bundle identity and behavior.
 

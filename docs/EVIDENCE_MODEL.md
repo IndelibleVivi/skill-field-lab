@@ -209,7 +209,7 @@ not as a Field Lab subject identity.
 - Source, committed code, installed bytes, activated discovery, live execution,
   and owner acceptance remain separate evidence gates.
 
-## Delivery, selection, and application (0.2.1 candidate)
+## Delivery, selection, and application (0.2.1)
 
 Do not substitute one layer for another:
 

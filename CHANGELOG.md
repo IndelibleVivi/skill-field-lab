@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — 0.2.1 candidate
+## 0.2.1 — 2026-09-20
 
 - Bind every materialized subject mount to the saved plan before target invocation,
   including every repeat and matched/control attempt. Git subjects use the planned
@@ -19,8 +19,9 @@
   source, including the previously omitted explain/review-material modules and
   their regression files. Clarify that installed `doctor` compares against the
   installed package, not a newer authoring checkout.
-- This is an unreleased source candidate. Prior installation and live acceptance
-  belong to v0.2.0; no new installation, release, or live target run is implied.
+- This release adds source, documentation, and deterministic regression coverage.
+  Prior installation and live acceptance belong to v0.2.0; no v0.2.1 installation
+  or live target run is implied.
 
 - Sealed the worker-final changed-file set, diff, and tree digest before any
   verifier command runs. Workspace assertions now read the sealed worker tree

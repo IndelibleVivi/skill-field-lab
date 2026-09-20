@@ -277,7 +277,7 @@ The following v0.1 behavior is protected and must remain regression-covered:
   missing or digest-drifted artifacts, and next evidence gap without modifying
   the lab.
 
-## 0.2.1 evidence-provenance amendment (unreleased)
+## 0.2.1 evidence-provenance amendment
 
 Schema v2 remains active. Per-attempt `subject_delivery` records the mount, source
 kind, expected and actual tree digests, requested ref, materialized Git commit,

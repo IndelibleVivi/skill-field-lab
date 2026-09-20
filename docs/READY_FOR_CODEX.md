@@ -1,10 +1,11 @@
 # Source readiness
 
-Historical status: v0.2.0 release source verified on 2026-08-30. The current
-0.2.1 source candidate and its limits are reported in [BUNDLE_REPORT.md](../BUNDLE_REPORT.md).
-The acceptance below is retained as dated v0.2.0 evidence, not new candidate proof.
+Status: v0.2.1 release source verified through the deterministic checks reported
+in [BUNDLE_REPORT.md](../BUNDLE_REPORT.md). The acceptance below also retains
+dated v0.2.0 installation/live evidence; it is not new v0.2.1 proof.
 
-The current source is intended to be ready when all of these are freshly true:
+The v0.2 release line is supported by these source checks and dated acceptance
+surfaces:
 
 - schema-v2 normal commands and one-shot v1 migration pass unit coverage;
 - final-response, workspace, command, trace, receipt, review, drift, resume,
@@ -22,7 +23,7 @@ The current source is intended to be ready when all of these are freshly true:
 - the source diff passes `git diff --check`; and
 - a transactional user install reports matching source/controller identities.
 
-This file records source and release-acceptance readiness. It does not infer
-remote tag/asset presence, installation in every environment, automatic
-controller discovery in a new Codex task, or owner acceptance; those states
-are read back and reported separately.
+This file records source and historical release-acceptance readiness. It does
+not infer remote tag/asset presence, installation in every environment,
+automatic controller discovery in a new Codex task, or owner acceptance; those
+states are read back and reported separately.

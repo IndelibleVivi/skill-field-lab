@@ -1,10 +1,10 @@
-Skill Field Lab 0.2.1 source-candidate verification report
+Skill Field Lab 0.2.1 verification report
 Date: 2026-09-20
 
 FINAL SUPPORTED-RUNTIME BUNDLE CHECK
-Runtime: Python 3.12.13, macOS arm64; installed standalone interpreter.
-Command: python3.12 scripts/check_bundle.py (its bin directory first on PATH)
-Result: PASS; 83 tests in 33.321s.
+Runtime: Python 3.12.14, macOS arm64; bundled workspace runtime.
+Command: python3 scripts/check_bundle.py (its bin directory first on PATH)
+Result: PASS; 83 tests.
 Package compilation and both example validate/selftest flows: PASS.
 Target-model invocations: 0. LLM-grader invocations: 0.
 All target exercises used fake executables.
@@ -26,7 +26,7 @@ NEW REGRESSIONS
 OTHER CHECKS
 Both controller Skills: skill-validate PASS.
 Bundle manifest: 121 entries verified; includes all tracked source files plus
-this candidate's new delivery test, excluding the self-referential manifest.
+this release's new delivery test, excluding the self-referential manifest.
 Git whitespace: PASS.
 
 LOCAL PYTHON 3.13 OBSERVATIONS
@@ -37,16 +37,17 @@ in an existing review-material test (15 seconds); that unchanged test, the
 complete delivery regressions, and explain tests then passed together (15 tests).
 The cause was not established. Production process code, timeout values, and
 assertions were not weakened. The final complete PASS above is specifically the
-Python 3.12.13 run, not a claim of a complete Python 3.13 PASS.
+Python 3.12.14 run, not a claim of a complete Python 3.13 PASS.
 
-DELIVERY LIMITS
-Unreleased source candidate only. No daily install, tag/Release, live target
-acceptance, new provider, grader, registry, or host-selection instrumentation.
-Git publication and remote CI are separate read-backs from these local checks.
+RELEASE EVIDENCE LIMITS
+This report verifies the v0.2.1 release source only. It does not establish a
+local installation, remote tag/Release, live target acceptance, new provider,
+grader, registry, or host-selection instrumentation. Git publication and remote
+CI remain separate read-backs from these local checks.
 
 HISTORICAL V0.2.0 EVIDENCE BELOW
 Preserved from 2026-08-30; its installation and live acceptance do not verify
-this candidate. Historical test counts apply only to that historical source.
+this release. Historical test counts apply only to that historical source.
 
 Skill Field Lab v0.2 verification report
 Date: 2026-08-30

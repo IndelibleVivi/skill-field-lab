@@ -14,10 +14,10 @@ Skill Field Lab 是一套 local maintainer workbench：用来研究外部 agent 
 Subject 仍由它自己的 repo 独立拥有和使用；Field Lab 不会把 runtime 复制进去、
 替它安装 Skill，也不会让它反过来依赖 Field Lab。
 
-最新已发布版本为 **v0.2.0**；本 checkout 是 **0.2.1 source candidate（尚未发布）**。
-当前候选检查与历史 v0.2.0 安装／live 证据分别见 [bundle report](BUNDLE_REPORT.md)。
-本机 installation、Git tag、published assets、controller discovery 与 owner acceptance
-仍是独立的可观察状态。
+最新已发布版本为 **v0.2.1**。它的 [bundle report](BUNDLE_REPORT.md) 记录了
+deterministic release-source checks，并将已注明日期的 v0.2.0 安装／live 证据明确
+保留为历史证据。本机 installation、Git tag、published assets、controller discovery
+与 owner acceptance 仍是独立的可观察状态。
 
 每个 target attempt 在调用前将实际 subject mount 与 saved plan 的 tree digest 对比；
 Git subject 使用计划里已解析的 commit。交付不一致时，以 `input-drift` 停止后续 matrix，

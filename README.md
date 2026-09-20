@@ -13,11 +13,11 @@ local subject. The subject remains independently owned and usable: Field Lab
 does not copy its runtime into subject repositories, install subjects, or make
 them depend on this project.
 
-Latest published release: **v0.2.0**. This checkout is the **0.2.1 source
-candidate (unreleased)**. See the [bundle report](BUNDLE_REPORT.md) for current
-candidate checks and separately dated v0.2.0 installation/live evidence. A local
-installation, Git tag, published assets, controller discovery, and owner
-acceptance remain separate observable states.
+Latest published release: **v0.2.1**. Its [bundle report](BUNDLE_REPORT.md)
+records deterministic release-source checks and keeps the dated v0.2.0
+installation/live evidence explicitly historical. A local installation, Git
+tag, published assets, controller discovery, and owner acceptance remain
+separate observable states.
 
 Every target attempt verifies the actual subject mount against the saved plan
 before invocation. Git subjects stay on the planned commit. Delivery mismatch
