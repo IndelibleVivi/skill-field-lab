@@ -1,5 +1,9 @@
 # Source carryover from Softpowers
 
+> Historical record — retained and retired mechanisms at the v0.2 rewrite.
+> For current behavior, read the [Product spec](../PRODUCT_SPEC_V0.2.md);
+> for current evidence and release status, read [Current state](../CURRENT_STATE.md).
+
 Skill Field Lab is a standalone structural rewrite that retained proven
 mechanisms while retiring the functional subject copy from current source.
 

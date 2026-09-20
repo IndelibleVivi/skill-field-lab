@@ -31,6 +31,13 @@ The archive is generated from tag `v0.2.1` with the top-level prefix
 after extraction, `shasum -a 256 -c BUNDLE_MANIFEST.sha256` and
 `python3 scripts/check_bundle.py` validate tracked bundle identity and behavior.
 
+`BUNDLE_MANIFEST.sha256` describes the files in its own source revision,
+excluding itself. Documentation moves and additions must be reflected there.
+Regenerating the working-source manifest does not change the manifest or
+artifacts already published at a release tag. Dated bundle/test reports remain
+evidence for the revision they name; current status lives in
+[Current state](CURRENT_STATE.md).
+
 A future Codex plugin or marketplace projection is a separate distribution
 decision. Do not add a plugin manifest until its current host contract,
 permissions, update model, uninstall behavior, and source/install provenance

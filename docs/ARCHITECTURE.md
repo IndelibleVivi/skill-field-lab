@@ -1,214 +1,154 @@
 # Architecture
 
-[简体中文](ARCHITECTURE.zh-CN.md)
+[简体中文](ARCHITECTURE.zh-CN.md) · [Documentation map](README.md)
 
-Status: current v0.2 source contract.
+This is an explanatory map of the current source. The [Product spec](PRODUCT_SPEC_V0.2.md)
+owns product behavior; the [Workspace model](WORKSPACE_MODEL_V0.2.md) owns
+subject identity and materialization; the [Evidence model](EVIDENCE_MODEL.md)
+owns evidence interpretation. Dated release and verification status lives in
+[Current state](CURRENT_STATE.md).
 
-This map answers one question: how does Skill Field Lab turn a source study
-into claim-bounded evidence without hiding model spend or taking ownership of
-the subject repository?
+Skill Field Lab connects three jobs: study a reusable mechanism, decide whether
+more evidence is needed, and preserve exactly what that evidence supports.
+The diagrams below separate those jobs from file ownership and execution.
+Boxes are responsibilities or local artifacts, not independent services.
+There is no daemon, global registry or subject runtime dependency.
 
-The boxes are logical responsibilities, not independently deployed services.
-Skill Field Lab has no daemon, global registry, background scheduler, or
-subject runtime dependency.
+## 1. From an external pattern to a decision
 
-## System overview
+**Question:** what must happen before a useful-looking idea belongs in a local system?
 
 ```mermaid
 flowchart TB
-  %% Semantic node IDs are kept identical to the Simplified Chinese sibling.
-  subgraph INSTALLED["User-level installation · derived deployment"]
-    direction LR
-    InstalledSurface["Maintainer-controlled installed surface<br/>transactional app + launcher + controllers<br/>doctor proves bytes + provenance only<br/>≠ discovery · live behavior · owner acceptance"]
-  end
+  ExternalSource["External pattern"] -->|pin and study| PatternIntake["Pattern Intake<br/>mechanism + local fit"]
+  PatternIntake -->|evidence is sufficient| Decision["Adoption decision"]
+  PatternIntake -->|one consequential claim remains| FieldTrial["Field Trial<br/>choose sufficient evidence"]
+  FieldTrial --> Inspect["Inspect source"]
+  FieldTrial --> Observe["Observe ordinary work"]
+  FieldTrial --> Synthetic["Synthetic trial<br/>canary or matched"]
+  Inspect --> Evidence["Claim-scoped evidence"]
+  Observe --> Evidence
+  Synthetic --> Evidence
+  Evidence -->|inform, never choose automatically| Decision
+  classDef decision fill:#ecfdf5,stroke:#047857,color:#12372a;
+  classDef trial fill:#eff6ff,stroke:#2563eb,color:#172554;
+  class Decision decision;
+  class FieldTrial,Synthetic trial;
+```
 
-  ExternalSource["External mechanism source<br/>pin + inspect; never adopted by default"]
+Pattern Intake can close with `ADOPT`, `ADAPT`, `REJECT`, `DEFER`, or
+`ALREADY COVERED` before a lab exists. A decision records the rationale,
+accepted mechanism, excluded machinery and condition for reopening it;
+adoption still needs its own implementation or installation authority.
 
-  subgraph LAB["Study + external v2 lab · visible Field Lab-owned state"]
-    direction LR
-    PatternIntake["Pattern Intake · Level 0<br/>source study · no target spend"]
-    LabState["Visible schema-v2 lab state<br/>manifest · candidate · claim · optional case<br/>plans · attempts · evidence records"]
-    LaneChoice{"Field Trial · explicit only<br/>weakest sufficient lane?"}
-    ObservedLane[("Source conclusion or observed evidence<br/>claim-bound ordinary-work artifact<br/>no target invocation")]
+Field Trial is the explicit-only `skill-eval` controller. Its lanes are choices,
+not a mandatory sequence: start with inspection and ordinary traces, diffs,
+tests or reviews. A canary or matched comparison is justified only by an
+unresolved claim that matters to the decision. There is no global Skill score
+or automatic winner. The `fieldlab` CLI records and executes the selected
+evidence path; it does not choose the final disposition.
 
-    PatternIntake -->|unresolved candidate + claim| LabState
-    LabState --> LaneChoice
-    PatternIntake -->|source study is sufficient| ObservedLane
-    LaneChoice -->|ordinary evidence is sufficient| ObservedLane
-  end
+For example, studying a reference-reading rule may establish that the local
+Skill already covers it. That can end as `ALREADY COVERED`, with no installation
+or additional target-agent invocation. If whether the rule changes behavior remains material, ordinary
+work may answer it; only the remaining gap motivates a trial. This example is
+illustrative, not a reported experiment.
 
-  subgraph EXECUTION["Disposable execution boundary · synthetic lane only"]
-    direction LR
-    SyntheticLane["Immutable no-spend plan → explicit live gate<br/>--live · exact cap · authorization · drift re-pin<br/>read/pin subject → disposable workspace · isolated HOME<br/>ordinary worker context → deterministic verification<br/>quiescent immutable receipt; raw artifacts stay in lab"]
-  end
+## 2. Ownership and the subject-write boundary
 
-  subgraph EVIDENCE["Evidence and decision authority"]
-    direction LR
-    EvidenceDecision["Immutable observed or synthetic record<br/>human review remains separate + digest-bound<br/>Decision: ADOPT · ADAPT · REJECT<br/>DEFER · ALREADY COVERED"]
-  end
+**Question:** where do source, mutable execution and durable evidence belong?
 
-  subgraph SUBJECT["Independent subject repository · subject-owned"]
-    direction LR
-    SubjectRepo["Canonical Skill + cases + docs<br/>subject owns source + release state<br/>and any selected evidence directory"]
-  end
-
-  ExternalSource -->|pin + study| PatternIntake
-  InstalledSurface -->|Pattern Intake controller| PatternIntake
-  InstalledSurface -->|fieldlab CLI + Field Trial controller| LabState
-
-  LaneChoice -->|synthetic evidence is still needed| SyntheticLane
-  ObservedLane --> EvidenceDecision
-  SyntheticLane --> EvidenceDecision
-  EvidenceDecision ==>|promote · only intentional subject write<br/>selected records only| SubjectRepo
-
-  classDef entry fill:#eef2ff,stroke:#4f46e5,color:#111827,stroke-width:1.5px;
-  classDef action fill:#eff6ff,stroke:#2563eb,color:#111827,stroke-width:1.5px;
-  classDef state fill:#ecfdf5,stroke:#059669,color:#111827,stroke-width:1.5px;
-  classDef gate fill:#fff7ed,stroke:#ea580c,color:#111827,stroke-width:2px;
-  classDef execution fill:#f0fdfa,stroke:#0f766e,color:#111827,stroke-width:1.5px;
-  classDef authority fill:#fdf2f8,stroke:#be185d,color:#111827,stroke-width:2px;
-  classDef subject fill:#f5f3ff,stroke:#7c3aed,color:#111827,stroke-width:1.5px;
-
-  class ExternalSource entry;
-  class InstalledSurface,PatternIntake action;
-  class LabState,ObservedLane state;
-  class LaneChoice gate;
-  class SyntheticLane execution;
-  class EvidenceDecision authority;
+```mermaid
+flowchart TB
+  InstalledSurface["User-level installation<br/>app + CLI + controllers"] -->|operate| LabState["External local lab<br/>manifest + records + evidence"]
+  LabState -->|materialize| WorkerWorkspace["Disposable workspace<br/>lab-owned subject copy"]
+  WorkerWorkspace -->|seal artifacts| LabState
+  LabState -->|read and pin| SubjectRepo["Independent subject repo<br/>canonical source + release state"]
+  LabState ==>|promote to selected evidence directory| SubjectRepo
+  classDef state fill:#ecfdf5,stroke:#047857,color:#12372a;
+  classDef subject fill:#f5f3ff,stroke:#7c3aed,color:#2e1065;
+  class LabState state;
   class SubjectRepo subject;
-
-  style INSTALLED fill:#f8fafc,stroke:#64748b,stroke-width:1px;
-  style LAB fill:#f7fee7,stroke:#65a30d,stroke-width:1px;
-  style EXECUTION fill:#f0fdfa,stroke:#0f766e,stroke-width:1px;
-  style EVIDENCE fill:#fdf4ff,stroke:#a21caf,stroke-width:1px;
-  style SUBJECT fill:#faf5ff,stroke:#7c3aed,stroke-width:1px;
 ```
 
-## How to read the map
+- **Level 0:** source study needs no lab. **Level 1:** a visible external lab
+  owns the manifest, records, plans and attempt artifacts; reading and
+  materialization leave the subject source unchanged. The workspace receives
+  a copy, not ownership of the original source.
+- **Level 2:** the thick `promote` edge is the only Field Lab operation that
+  intentionally writes to a selected subject evidence directory. It copies
+  selected candidates, claims, cases, receipts, reviews and decisions, refuses
+  collisions, and never copies runtime, manifest, plans or mutable runs.
+  It neither commits nor pushes.
+- `fieldlab/` and the controller Skills in this repository are canonical source.
+  Installation is a derived copy managed by the transactional
+  [`scripts/install.py`](../scripts/install.py). Installed bytes, controller
+  discovery and live behavior are separate observations; see [Installation](INSTALLATION.md).
 
-1. **Study can finish before a lab exists.** Pattern Intake may resolve the
-   question from source evidence and produce a decision or no-change result
-   with no target invocation.
-2. **The lab owns evidence state, not subject source.** `fieldlab.json`, cases,
-   plans, attempts, receipts, reviews, and decisions remain in a visible
-   external v2 lab.
-3. **Planning and execution are different gates.** A plan starts no target
-   model. Synthetic execution additionally requires the saved plan, `--live`,
-   an exact invocation cap, and separate maintainer authorization.
-4. **Evaluator-only material stays out of worker context.** The target receives
-   the ordinary case prompt and disposable workspace; hidden assertions,
-   expected artifacts, and review rubrics remain controller-side.
-5. **Receipts do not absorb later judgment.** Attempt evidence seals only after
-   process-group quiescence. Human review is a separate digest-bound record;
-   Decision alone owns final disposition.
-6. **Subject source enters execution read-only.** The synthetic-lane node calls
-   out its pin-and-materialize boundary. The thick `promote` edge is the only
-   intentional subject write, and it carries selected records only—never the
-   runtime, manifest, plans, or run workspaces.
+Local source types and symlink/drift rules belong to the
+[Workspace model](WORKSPACE_MODEL_V0.2.md). V1 input goes through
+[one-shot migration](MIGRATION_V1_TO_V2.md), never a parallel runtime.
 
-## Controller plane
+## 3. A synthetic attempt and its evidence
 
-`pattern-intake` studies one mechanism and may finish with `ADOPT`, `ADAPT`,
-`REJECT`, `DEFER`, or `ALREADY COVERED` without creating a lab. It is allowed
-to invoke implicitly because it starts no target model and grants no write or
-installation authority.
+**Question:** how can a later check or judgment avoid changing what the worker actually did?
 
-`skill-eval`, displayed as **Field Trial**, is explicit-only. It receives one
-unresolved claim, looks for existing ordinary-work evidence first, then designs
-the weakest sufficient synthetic path only if the decision still needs it.
-Controller instructions, hidden assertions, expected artifacts, and evaluator
-advice never enter the target-worker prompt.
-
-## Workspace plane
-
-`fieldlab.json` owns one inspectable lab. The active loader accepts schema v2
-only. A lab can point to:
-
-- an external `local-path`;
-- one `local-git-ref` plus repository-relative subpath;
-- a lab-owned immutable `snapshot`; or
-- an `isolated-control` with no subject overlay.
-
-All execution happens in disposable Git workspaces. Fixture and source
-symlinks are checked before copy. Local paths and Git refs are content-pinned
-into the plan; drift before execution rejects the plan. Level 1 operations do
-not write to the subject repository.
-
-## Execution plane
-
-The adapter registry currently exposes one real adapter: `codex-exec`.
-Provider independence is not claimed. The adapter:
-
-- passes only the ordinary case prompt and disposable workspace to the worker;
-- ignores user config and isolates worker `HOME` while retaining the operator's
-  Codex authentication directory;
-- uses the declared sandbox, approval, network, requested model, and requested
-  reasoning effort; and
-- streams raw JSONL trace and stderr into the attempt directory.
-
-The runner preserves the v0.1 execution kernel:
-
-1. `plan` starts no target model and enumerates every invocation.
-2. `run` requires a saved plan, `--live`, and `--max-invocations`.
-3. Manifest, case, prompt, fixture, subject, Field Lab source, and available
-   executable identity are re-pinned immediately before execution. Each attempt
-   also verifies the actual subject mount against the plan, with Git materialization
-   pinned to the planned commit. Delivery failures stop before target invocation;
-   their receipts contain no worker-final or process-quiescence claim.
-4. Target and command-verifier processes use dedicated POSIX process groups.
-5. Timeout, interrupt, parent-exit-with-child, and cleanup failure all converge
-   on bounded group termination.
-6. Evidence seals only after group quiescence. A termination failure cannot be
-   represented as a normal pass.
-7. The worker-final changed-file set, diff, and tree digest are sealed before
-   any verifier command runs. Workspace assertions read those sealed bytes;
-   each command assertion runs in its own disposable copy of the same sealed
-   tree, and derived changes are attributed and cannot themselves produce a
-   `pass`. Diff sealing never mutates the workspace Git index.
-
-Windows live execution remains unsupported because v0.2 has no equivalent Job
-Object containment adapter.
-
-## Evidence plane
-
-The record chain is:
-
-```text
-source -> candidate -> claim -> [case -> plan -> attempt -> receipt] -> decision
+```mermaid
+flowchart TB
+  SavedPlan["Saved plan<br/>inputs + invocation matrix"] --> LiveGate["Authorized run<br/>--live + invocation cap"]
+  LiveGate --> Preflight["Input + subject-delivery preflight"]
+  Preflight -->|verified| Worker["Disposable worker execution"]
+  Preflight -->|delivery fails| PreflightReceipt["Preflight-only receipt<br/>zero target calls; stop matrix"]
+  Worker --> Quiescence{"Process group quiescent?"}
+  Quiescence -->|no| TerminationFailure["termination-failed<br/>execution evidence unsealed"]
+  Quiescence -->|yes| WorkerFinal["Seal worker-final output<br/>diff + tree + declared review files"]
+  WorkerFinal --> Verification["Verify sealed output<br/>fresh copy per command assertion"]
+  Verification --> Receipt["Immutable receipt<br/>bounded execution outcome"]
+  Receipt --> Explain["fieldlab explain<br/>read-only claim evidence view"]
+  Receipt -->|digest-bound| HumanReview["Separate human review"]
+  HumanReview --> Explain
+  classDef gate fill:#fff7ed,stroke:#c2410c,color:#431407;
+  classDef state fill:#ecfdf5,stroke:#047857,color:#12372a;
+  class LiveGate,Preflight,Quiescence gate;
+  class WorkerFinal,Receipt,Explain state;
 ```
 
-The bracketed synthetic chain is optional. `observe` may bind an existing
-artifact directly to a claim. Candidate describes a mechanism and local fit;
-Decision alone owns the final disposition. A sealed receipt is immutable;
-later human judgment lives in a separate review record bound to its digest.
+Planning starts no target model. A live run rechecks pinned inputs; every
+attempt additionally compares the actual subject mount with the plan. Git
+subjects use the planned commit. Delivery mismatch (`input-drift`) or setup
+failure (`preflight-failed`) stops the remaining matrix before invocation.
+Those receipts establish only preflight facts, with no worker-final or process
+claim. Earlier input drift rejects the saved plan outright.
 
-Raw attempt artifacts stay in the lab. Receipts are content-light digests and
-bounded summaries. `promote` copies only selected candidates, claims, cases,
-receipts, reviews, and decisions. It never promotes the runtime, lab manifest,
-plans, or run workspaces.
+The worker receives the ordinary prompt, fixture, subject copy and permitted
+tools. Controller instructions, hidden assertions, expected outputs and review
+rubrics remain outside that context. The sole implemented adapter is
+`codex-exec`; it uses isolated worker HOME and ignored user config while keeping
+the operator's selected Codex authentication directory. This is workspace-scoped
+evidence, not hermetic isolation. Live execution is POSIX-only.
 
-A live worker workspace is not retained; only `keep_workspace` keeps it whole.
-A case may declare bounded `human_review_material` files that are sealed
-atomically into attempt-owned `review-material/` for a pending review. `fieldlab
-explain` is a read-only per-claim view recomputed from claims, receipts, and
-reviews, including conflicting-review and legacy-boundary handling. Neither
-path starts a target model.
+After target quiescence, worker output is sealed **before** verifier commands.
+Workspace assertions read those worker bytes; each command starts from its own
+copy of the same tree. A verifier's repair is attributed separately and cannot
+make the worker result a clean pass. Target and command-verifier process groups
+must become quiescent; timeout, surviving descendants and cleanup failures
+cannot yield normal success. Declared review-file capture failure records
+`evidence-failed` and produces no normal receipt. See the [Adapter contract](ADAPTER_CONTRACT.md)
+and [Workspace model](WORKSPACE_MODEL_V0.2.md) for the full failure/retention rules.
 
-## Installation plane
+The live workspace is removed unless `keep_workspace` was selected. Sealed
+artifacts and any bounded declared review files remain in the lab. Human review
+is a separate record bound to the receipt digest; it never edits the receipt.
+`explain` recomputes one claim's evidence, including conflicting reviews and
+missing artifacts. A receipt can fail or remain inconclusive; a `PASS` alone
+is not an adoption decision. Verified delivery does not prove host selection,
+content application or exclusive causation.
 
-`scripts/install.py` stages the app, launcher, and controllers before any
-replacement. It recognises only its own marker, launcher, current controller
-digests, or the two known v0.1 controller digests. Existing targets are copied
-to a recoverable backup; adjacent rollback identities remain available until
-the entire replacement commits. A mid-commit failure restores prior targets.
+## Find the implementation
 
-The installed app carries source controller copies so `fieldlab doctor` can
-compare installed discovery bytes with the installation source. Installed
-bytes still do not prove next-turn Skill discovery or any target behavior.
-
-## Legacy boundary
-
-V1 is not an alternate architecture. `migrate-v1` is an offline parser that
-creates a separate v2 lab, rewrites legacy cases, snapshots overlay sources,
-and records semantic changes. Every normal command thereafter uses the single
-v2 object and execution model.
+| Responsibility | Canonical source | Contract |
+| --- | --- | --- |
+| Study and lane selection | [pattern-intake](../skills/pattern-intake/SKILL.md), [skill-eval](../skills/skill-eval/SKILL.md) | [Product spec](PRODUCT_SPEC_V0.2.md) |
+| Plan, materialize and execute | [plan.py](../fieldlab/plan.py), [subjects.py](../fieldlab/subjects.py), [runner.py](../fieldlab/runner.py), [process.py](../fieldlab/process.py) | [Workspace model](WORKSPACE_MODEL_V0.2.md), [Adapter contract](ADAPTER_CONTRACT.md) |
+| Verify, seal and interpret | [verify.py](../fieldlab/verify.py), [receipts.py](../fieldlab/receipts.py), [review_material.py](../fieldlab/review_material.py), [explain.py](../fieldlab/explain.py) | [Evidence model](EVIDENCE_MODEL.md) |
+| Install and check derived bytes | [install.py](../scripts/install.py), [doctor.py](../fieldlab/doctor.py) | [Installation](INSTALLATION.md) |

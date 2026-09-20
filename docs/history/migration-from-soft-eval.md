@@ -6,11 +6,11 @@ verification. Do not execute the old copy/install procedure from v0.1.
 
 Current authority:
 
-- [One-shot v1-to-v2 migration](MIGRATION_V1_TO_V2.md) for an existing legacy
+- [One-shot v1-to-v2 migration](../MIGRATION_V1_TO_V2.md) for an existing legacy
   `fieldlab-pack.json`;
-- [Softpowers case study](../case-studies/softpowers.md) for the ownership and
+- [Softpowers case study](../../case-studies/softpowers.md) for the ownership and
   integration boundary; and
-- [Installation](INSTALLATION.md) for the single current app/controller
+- [Installation](../INSTALLATION.md) for the single current app/controller
   installation.
 
 The durable historical decisions remain:

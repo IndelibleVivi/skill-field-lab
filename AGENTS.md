@@ -106,7 +106,17 @@ backup; restore prior targets after mid-commit failure; and support
 next-turn controller discovery, live behavior, Git commit/push, and public
 release are distinct proof layers.
 
-## Documentation impact
+## Documentation authority and impact
+
+`docs/README.md` is the reader/navigation map. Product behavior belongs to
+`docs/PRODUCT_SPEC_V0.2.md`; subject identity/materialization belongs to
+`docs/WORKSPACE_MODEL_V0.2.md`; evidence interpretation belongs to
+`docs/EVIDENCE_MODEL.md`, with record shapes in `schemas/v2/`. The paired
+Architecture pages explain those contracts and do not define parallel rules.
+
+`docs/CURRENT_STATE.md` owns dated source/support/release and evidence state.
+Completed records in `docs/history/` preserve provenance, not an active work
+queue. Preserve dated reports and case studies when revising current claims.
 
 Update:
 
@@ -114,6 +124,8 @@ Update:
   defaults, support, or boundaries change;
 - this file when canonical paths, active compatibility, required verification,
   install, or spend/write authority changes;
+- `docs/README.md` and `docs/CURRENT_STATE.md` when reading paths or dated
+  source/support/release evidence change;
 - product/workspace/schema docs for accepted contract changes;
 - architecture/evidence/adapter docs when their semantics change;
 - installation or migration guides when operator behavior changes;

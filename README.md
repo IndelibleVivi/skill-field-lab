@@ -4,74 +4,87 @@
 
 > **Study before you install. Test only what matters.**
 
-Skill Field Lab is a local maintainer workbench for learning from external
-agent Skills, evolving reusable behavior, and producing claim-bounded evidence
-without turning every useful mechanism into a dependency.
+Skill Field Lab is a local maintainer workbench for one job: study an external
+agent mechanism, decide whether it belongs in your own system, and only then pay
+for the evidence that decision actually needs.
 
-One user-level installation can study or exercise any explicitly selected
-local subject. The subject remains independently owned and usable: Field Lab
-does not copy its runtime into subject repositories, install subjects, or make
-them depend on this project.
+It is for the maintainer who owns reusable agent behavior — Skills, prompts,
+harnesses, routing — and has to answer questions like *should this borrowed
+mechanism land here?*, *how do I know this Skill actually changed the outcome?*,
+and *can I answer that without a full benchmark run?* Taking every interesting
+external idea into the local runtime is one risk; paying target-model
+invocations for a claim that source inspection, a diff, or one small case could
+already settle is another.
 
-Latest published release: **v0.2.1**. Its [bundle report](BUNDLE_REPORT.md)
-records deterministic release-source checks and keeps the dated v0.2.0
-installation/live evidence explicitly historical. A local installation, Git
-tag, published assets, controller discovery, and owner acceptance remain
-separate observable states.
+Field Lab works on one claim at a time and tries the cheapest sufficient
+evidence path first. An instrumented synthetic trial is one option, not the
+default.
 
-Every target attempt verifies the actual subject mount against the saved plan
-before invocation. Git subjects stay on the planned commit. Delivery mismatch
-stops the matrix with `input-drift` and zero target calls for that attempt;
-materialization errors use `preflight-failed`. The receipt distinguishes verified
-subject delivery, unknown host selection, and content application requiring
-semantic review. This also applies to repeats and matched controls.
+Current version: **0.2.1**, source-verified — schema v2 is active, the runtime
+is Python-3.10+ standard library only, and `codex-exec` is the only implemented
+adapter. What that verification covers, and what it does not, is in
+[Current state](docs/CURRENT_STATE.md), [CHANGELOG.md](CHANGELOG.md), and
+[BUNDLE_REPORT.md](BUNDLE_REPORT.md).
 
-Trace `command_reference_mentions` and the matching
-`command_reference_mentions_include` assertion prove only command-path mentions:
-`echo references/example.md` qualifies without reading that file.
-`reference_reads_include` remains a deprecated v2 assertion alias. `activation`
-is a declared scenario, not evidence that a host activated a Skill.
+| If you want to… | Start with |
+| --- | --- |
+| Understand the product and its three roles | [The ordinary path](#the-ordinary-path) |
+| Install the app and controllers | [Install once](#install-once) |
+| Keep evidence for an unresolved claim | [Start a v2 lab](#start-a-v2-lab) → [Existing work comes first](#existing-work-comes-first) |
+| Understand what a receipt can prove | [What each lane can and cannot show](#what-each-lane-can-and-cannot-show) → [docs/EVIDENCE_MODEL.md](docs/EVIDENCE_MODEL.md) |
+| Find any document | [docs/README.md](docs/README.md), the bilingual reading map |
 
-`selftest` reports `deterministic_oracle_status`, exercised/unexercised surfaces,
-and zero target invocations per case. It tests only declared workspace/command
-assertions against fixture and expected overlay; result assertions, trace
-assertions, and human review remain untested. `oracle_status` is retained as a
-compatibility alias for the deterministic status.
-
-Architecture maps: [English](docs/ARCHITECTURE.md) ·
-[简体中文](docs/ARCHITECTURE.zh-CN.md).
-
-## The working model
+## The ordinary path
 
 ```text
 external source
-  -> Pattern Intake
+  -> Pattern Intake          study + decision (no target-agent invocation, no subject write)
        -> ADOPT | ADAPT | REJECT | DEFER | ALREADY COVERED
-       -> no lab is a valid completed result
-       -> one unresolved claim, only when stronger evidence would matter
-            -> Field Trial
-                 -> existing ordinary-work evidence first
+       -> one unresolved claim, only when stronger evidence would change the decision
+            -> Field Trial  inspect / observe existing work first
                  -> smallest no-spend plan if still unresolved
                  -> explicit capped live run only when separately authorized
 ```
 
-Field Lab has three intervention levels:
+**Pattern Intake** (`$pattern-intake`) pins an external source, distils one
+portable mechanism, names the local problem it would solve, picks the lowest
+landing plane, and closes with `ADOPT`, `ADAPT`, `REJECT`, `DEFER`, or
+`ALREADY COVERED`. It makes no additional target-agent invocation — no lab, no
+case, no subject write — and a study ending in `REJECT` or `DEFER` is a
+completed result, not a study that gave up.
 
-1. **Level 0 — intake only.** `$pattern-intake` pins and studies one external
-   mechanism. It needs no manifest, fixture, subject write, or model run.
-2. **Level 1 — external local lab.** `fieldlab init` creates an inspectable lab
-   anywhere you choose. It reads or materializes selected local sources into
-   disposable workspaces and leaves subject repositories unchanged.
-3. **Level 2 — subject-owned evidence.** `fieldlab promote` copies explicitly
-   selected records to a chosen subject evidence directory. It never promotes
-   the Field Lab runtime, manifest, plans, or run workspaces.
+**Field Trial** (`$skill-eval`, explicit-only) owns the evidence path for one
+unresolved claim, chosen in this order: inspect the source; observe existing
+ordinary work; run a single canary; or run a matched trial. It looks for the
+smallest sufficient evidence path rather than the most thorough one, and it
+assigns no global Skill score.
 
-`$skill-eval` is displayed as **Field Trial** and is explicit-only. It owns the
-evidence-path decision, not a global Skill score.
+**`fieldlab`** is the CLI evidence kernel when a study needs structured lab
+records. It binds ordinary-work artifacts with `observe`, keeps later `review`
+separate, and recomputes a claim's evidence with `explain`. For synthetic trials,
+`plan` enumerates every invocation before `run` executes within the authorized
+cap. It also manages labs, validation, snapshots, migration and selected-record
+promotion. Source study can finish without using the CLI.
+
+## A small example
+
+The following example is illustrative, not a recorded run.
+
+You find an adjacent repository whose Skill keeps single-file edits direct, and
+ask whether that mechanism belongs in yours. Pattern Intake pins the source and
+distils the mechanism; it either closes the question — your system already
+covers it, or the fit is poor — or leaves one unresolved claim about your own
+Skill's behavior. Field Trial then looks for that claim in work you already
+have: a diff, a trace, a test result, a review. If that settles it, one
+`fieldlab observe` records the evidence, and you write the decision. Only when
+the claim is still unresolved *and* stronger evidence would change the decision
+does a bounded trial earn its target-agent invocations. The disposition is
+yours; Field Lab only keeps the reasoning and the evidence apart.
 
 ## Install once
 
-Python 3.10+, Git, and Codex CLI are required. Live execution is POSIX-only in
+Run the installer from this repository checkout. Python 3.10+, Git, and Codex
+CLI are required for the full workflow. Live execution is POSIX-only in
 v0.2; Windows fails closed until equivalent process containment exists.
 
 ```bash
@@ -101,8 +114,12 @@ fieldlab validate /path/to/my-study/fieldlab.json
 fieldlab list /path/to/my-study/fieldlab.json
 ```
 
-`init` creates an isolated control and empty record/case directories. Add an
-explicit local Skill source to `fieldlab.json`:
+`init` creates an isolated control and empty record/case directories. `list`
+and `validate` inspect the lab; `selftest` runs declared deterministic checks in
+disposable copies without a target invocation. `snapshot-git` pins one local Git
+ref/path into a lab-owned snapshot; `promote` copies selected records into a
+chosen subject evidence directory. Add an explicit local Skill source to
+`fieldlab.json`:
 
 ```json
 {
@@ -139,6 +156,12 @@ proves the unresolved fixture fails and the expected overlay passes:
 ```bash
 fieldlab selftest /path/to/my-study/fieldlab.json
 ```
+
+Selftest reports `deterministic_oracle_status`, exercised/unexercised surfaces
+and zero target invocations. It checks workspace/command assertions only;
+result, trace and human review remain untested. `oracle_status` is a
+compatibility alias. Output-only cases report `not-applicable` here, so the
+legal-research example below does not prove final-response behavior by selftest.
 
 The bundled examples cover a file-edit oracle and a legal-research case that
 passes solely through final-response assertions:
@@ -203,11 +226,13 @@ copied to several canonical locations, labels legacy receipts that lack the
 worker-final boundary marker `legacy-ambiguous`, lists pending, failed, or
 conflicting review requirements and missing or digest-drifted artifacts, and
 names the smallest next evidence gap. `--json` emits the same structure for
-tooling. It starts no target model and modifies neither the lab nor the subject.
+tooling. It makes no additional target-agent invocation and modifies neither the
+lab nor the subject.
 
 ## Plan before any spend
 
-Planning is read-only with respect to subjects and starts no target model:
+Planning is read-only with respect to subjects and makes no additional
+target-agent invocation:
 
 ```bash
 fieldlab plan /path/to/my-study/fieldlab.json \
@@ -237,7 +262,14 @@ There are no implicit retries, graders, repeats, baselines, or full suites.
 Target and verifier processes run in dedicated POSIX groups; evidence seals only
 after the group is quiescent.
 
-The runner seals the worker-final changed-file set, diff, and tree digest
+Every attempt re-verifies the actual subject mount against the saved plan before
+invocation, and Git subjects stay on the planned resolved commit. Delivery
+mismatch stops the matrix as `input-drift` with zero target calls for that
+attempt; a materialization error is `preflight-failed`. These failure receipts
+seal only preflight artifacts and make no worker-final or process-quiescence
+claim.
+
+The runner also seals the worker-final changed-file set, diff, and tree digest
 before any verifier process starts. Workspace assertions read those sealed
 worker bytes. Each command assertion starts from that same sealed tree in its
 own byte copy, so no command inherits another command's edit; a change inside a
@@ -262,11 +294,33 @@ attempt artifacts (`case.json`, `prompt.md`, `trace.jsonl`, `stderr.log`,
 `final-output.md`, `diff.patch`, `verification.json`). `keep_workspace=true`
 remains the only whole-workspace retention switch.
 
+## What each lane can and cannot show
+
+Receipts keep independent dimensions apart instead of collapsing them into a
+score:
+
+- origin: `observed | synthetic`;
+- subject scope: `isolated-control | workspace-scoped | hermetic`;
+- comparison: `unmatched | single | matched`;
+- verification methods: `deterministic | human | llm`; and
+- independence: `implementer-run | separate-agent | external-reviewer`.
+
+`hermetic` is reserved, and workspace-scoped evidence does not prove exclusive
+causation. Requested model and effort are caller-selection evidence unless a
+provider exposes stronger runtime identity. A live run also keeps three delivery
+layers apart: the verified subject mount (`subject_delivery`), host selection
+(unknown with the current adapter), and content application (needs semantic
+review). `activation` is a declared scenario, not proof that a host activated a
+Skill: trace `command_reference_mentions` and its
+`command_reference_mentions_include` assertion prove command-path mentions only
+— `echo references/example.md` qualifies without reading that file.
+`reference_reads_include` remains a deprecated v2 assertion alias.
+
 ## V1 is migration input, not a runtime
 
-There are no external v0.1 users, so v0.2 does not carry a dual runtime or
+At the v0.2 design decision, v0.1 had no external users, so v0.2 carries no dual runtime or
 legacy command aliases. Normal commands accept `fieldlab.json` schema v2 only.
-For Faye's own old packs:
+For an existing v1 pack:
 
 ```bash
 fieldlab migrate-v1 /path/to/fieldlab-pack.json \
@@ -277,61 +331,35 @@ The migrator preserves the source pack, rewrites cases to schema v2, snapshots
 legacy overlays into the new lab, and records any semantic change in a
 migration receipt.
 
-## Evidence ceiling
+## Where things live
 
-Receipts keep independent dimensions separate:
-
-- origin: `observed | synthetic`;
-- subject scope: `isolated-control | workspace-scoped | hermetic`;
-- comparison: `unmatched | single | matched`;
-- verification methods: `deterministic | human | llm`; and
-- independence: `implementer-run | separate-agent | external-reviewer`.
-
-`hermetic` is reserved. Workspace-scoped evidence does not prove the selected
-Skill was the exclusive cause. Requested model and effort are caller-selection
-evidence unless the provider exposes stronger runtime identity.
-
-## Repository map
-
-| Path | Authority |
+| Path | What it is |
 | --- | --- |
-| `docs/PRODUCT_SPEC_V0.2.md` | Accepted product and acceptance contract |
-| `docs/WORKSPACE_MODEL_V0.2.md` | Source identity, materialization, drift, and write boundaries |
-| `docs/SCHEMA_DELTA_V1_TO_V2.md` | V2 object authority and one-shot migration mapping |
-| `docs/ARCHITECTURE.md` / `docs/ARCHITECTURE.zh-CN.md` | Paired Mermaid maps of controller, workspace, execution, evidence, installation, and subject-ownership boundaries |
-| `docs/EVIDENCE_MODEL.md` | Claim ceilings and receipt/review interpretation |
-| `docs/INSTALLATION.md` | Install, upgrade, rollback, uninstall, and doctor |
-| `schemas/v2/` | Active JSON Schemas |
-| `schemas/v1/` | Historical schemas used only to understand migration inputs |
+| [`docs/README.md`](docs/README.md) | Bilingual reading map: which document answers which question |
+| [`docs/PRODUCT_SPEC_V0.2.md`](docs/PRODUCT_SPEC_V0.2.md) | Accepted product and acceptance contract |
+| [`docs/EVIDENCE_MODEL.md`](docs/EVIDENCE_MODEL.md) | Claim ceilings, evidence dimensions, receipt/review interpretation |
+| [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) | What is verified now, with proof layers kept separate |
+| `schemas/v2/` | Active JSON Schemas (`schemas/v1/` documents migration inputs only) |
 | `examples/` | Self-contained v2 labs |
-| `case-studies/` | Integration notes and screened receipts; never subject source |
+| `case-studies/` | Integration notes and screened receipts for independent subjects; never subject source |
+
+[docs/README.md](docs/README.md) is the shared reading map for workspace,
+architecture, adapter, installation, and historical documents.
 
 Softpowers and Repository Operational Truth Audit remain independent subjects.
 Their own repositories own their Skills and cases; Field Lab stores only
-integration notes and bounded evidence.
+integration notes and bounded evidence. `promote` remains the only Field Lab
+operation that intentionally copies selected records into a chosen subject
+evidence directory.
 
-## V0.2 release evidence
-
-On 2026-08-30, the installed v0.2 launcher ran one explicit
-`source-artifact-split` canary against a snapshot of Repository Operational
-Truth Audit: one target invocation, zero LLM graders, requested
-`gpt-5.6-sol` / `high`, network disabled, and no retry. The deterministic
-receipt passed and a separate implementer review accepted only the pinned
-synthetic false-green claim.
-
-This does not prove provider-resolved model identity, exclusive causality,
-installed or activated subject behavior, arbitrary repositories, owner
-acceptance, comparison superiority, or longitudinal reliability. See the
+The dated v0.2.0 canary (one explicit `source-artifact-split` run against a
+Repository Operational Truth Audit snapshot, one target invocation, zero
+graders, no retry) and its claim ceiling live in the
 [bundle report](BUNDLE_REPORT.md) and the screened
-[case study](case-studies/repository-operational-truth-audit.md).
-
-Separately, the subject published its own `v0.2.0` release on 2026-09-17 with a
-public forward receipt covering routing, Audit, and one-request Operate
-behavior, plus a maintainer-side source-owner gate. Field Lab records that as
-imported, dated observed evidence with explicit ceilings: it is not a Field Lab
-rerun, raw trace, or installed/discovery/fresh-host/publication proof. The
-[case study](case-studies/repository-operational-truth-audit.md) keeps the
-2026-08-30 history and adds the 2026-09-17/18 section.
+[case study](case-studies/repository-operational-truth-audit.md), not here. It
+does not prove provider-resolved model identity, exclusive causality, installed
+or activated subject behavior, arbitrary repositories, owner acceptance,
+comparison superiority, or longitudinal reliability.
 
 ## Development verification
 
