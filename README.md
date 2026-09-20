@@ -13,10 +13,30 @@ local subject. The subject remains independently owned and usable: Field Lab
 does not copy its runtime into subject repositories, install subjects, or make
 them depend on this project.
 
-Current release contract: **0.2.0**. Its source acceptance includes one real,
-capped target-agent canary. A local installation, Git tag, published assets,
-controller discovery in a later task, and owner acceptance remain separate
-observable states.
+Latest published release: **v0.2.0**. This checkout is the **0.2.1 source
+candidate (unreleased)**. See the [bundle report](BUNDLE_REPORT.md) for current
+candidate checks and separately dated v0.2.0 installation/live evidence. A local
+installation, Git tag, published assets, controller discovery, and owner
+acceptance remain separate observable states.
+
+Every target attempt verifies the actual subject mount against the saved plan
+before invocation. Git subjects stay on the planned commit. Delivery mismatch
+stops the matrix with `input-drift` and zero target calls for that attempt;
+materialization errors use `preflight-failed`. The receipt distinguishes verified
+subject delivery, unknown host selection, and content application requiring
+semantic review. This also applies to repeats and matched controls.
+
+Trace `command_reference_mentions` and the matching
+`command_reference_mentions_include` assertion prove only command-path mentions:
+`echo references/example.md` qualifies without reading that file.
+`reference_reads_include` remains a deprecated v2 assertion alias. `activation`
+is a declared scenario, not evidence that a host activated a Skill.
+
+`selftest` reports `deterministic_oracle_status`, exercised/unexercised surfaces,
+and zero target invocations per case. It tests only declared workspace/command
+assertions against fixture and expected overlay; result assertions, trace
+assertions, and human review remain untested. `oracle_status` is retained as a
+compatibility alias for the deterministic status.
 
 Architecture maps: [English](docs/ARCHITECTURE.md) ·
 [简体中文](docs/ARCHITECTURE.zh-CN.md).

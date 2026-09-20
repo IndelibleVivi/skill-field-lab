@@ -149,7 +149,9 @@ Runner 保留受保护的 execution kernel：
 1. `plan` 不启动 target model，并枚举每一次 invocation。
 2. `run` 必须同时得到 saved plan、`--live` 与 `--max-invocations`。
 3. Execution 前会重新 pin manifest、case、prompt、fixture、subject、Field Lab
-   source 与可用 executable identity。
+   source 与可用 executable identity。每个 attempt 还会对比实际 subject mount
+   和计划 digest，Git materialization 使用计划中的 commit。交付失败在 target
+   invocation 前停止，receipt 不声称存在 worker-final 或 process-quiescence 证据。
 4. Target 与 command-verifier processes 都使用专用 POSIX process groups。
 5. Timeout、interrupt、parent-exit-with-child 与 cleanup failure 都会进入有界的
    group termination。

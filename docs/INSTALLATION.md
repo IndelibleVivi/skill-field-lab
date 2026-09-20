@@ -30,6 +30,13 @@ Field Lab version/source, controller digest equality, Python, Git, Codex,
 POSIX support, and the selected Skill discovery path. It reports zero target
 invocations. It does not prove next-turn Skill discovery.
 
+When invoked from the installed launcher, `matches_source` compares installed
+components with the source bundled in that installed app and its receipt. It
+does not establish that the installation matches a newer authoring checkout.
+Compare the recorded source Git identity/version with the selected candidate
+before deciding whether an upgrade is needed. Source 0.2.1 candidate checks do
+not update an existing v0.2.0 installation.
+
 ## Custom paths
 
 ```bash

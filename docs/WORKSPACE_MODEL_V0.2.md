@@ -61,8 +61,9 @@ recomputed; content or Git identity drift rejects execution.
 
 The repository must already be local. Planning resolves `ref` to a commit and
 computes the selected archived tree digest. Materialization uses that exact
-local Git object rather than the mutable working tree. A moved ref causes plan
-drift and requires a new plan.
+local Git object rather than the mutable working tree. A ref moved before the
+run's initial check causes plan drift and requires a new plan. A ref moved during
+the run does not change any attempt: every archive uses the planned commit.
 
 ### `snapshot`
 
@@ -98,14 +99,18 @@ and the same permissions as its matched Skill subject. Its evidence scope is
 An `agent-skill` source defaults to `.agents/skills/<subject-id>` in the
 disposable worker. A manifest may set `mount` to another safe workspace-relative
 path, including `.agents/skills` for a source tree containing several Skills.
-The mount never changes the source repository.
+The mount never changes the source repository. Its full materialized tree must
+match the planned subject digest. Fixture files inside that mount must not add
+unplanned bytes. Prefer a dedicated mount; a root (`.`) mount with unrelated
+fixture files fails delivery verification rather than silently broadening the
+subject. Git metadata remains excluded by the existing tree-digest algorithm.
 
 ## Identity and drift
 
 Every saved plan binds:
 
 - canonical manifest content and manifest schema version;
-- selected case contract, prompt, optional fixture, and activation mode;
+- selected case contract, prompt, optional fixture, and declared activation scenario;
 - every selected subject source type, resolved physical locator, Git identity
   where applicable, tree digest, mount, and subject scope;
 - Field Lab Python source;
@@ -114,8 +119,17 @@ Every saved plan binds:
 
 Immediately before live execution, Field Lab recomputes these inputs. Any
 difference rejects the run and names a new no-spend plan as the recovery path.
+After materialization, every repeat/matched attempt separately computes the actual
+mount digest and compares it with the plan. Metadata, verification, and receipt
+carry `subject_delivery` (mount, source_type, expected_tree_sha256,
+actual_tree_sha256, requested_ref, resolved_commit, status). A mismatch stops the
+matrix as `input-drift`; a copy/archive/setup failure stops it as `preflight-failed`.
+Neither launches a target or runs target assertions. These failure receipts seal
+only preflight artifacts and explicitly record zero invocations; they make no
+process-quiescence or worker-final claim. A new reviewed plan is needed for changed
+inputs. The check is not an atomic filesystem snapshot or hostile-writer isolation.
 
-This identity is the **exact raw tree digest** of the mounted source. Every file
+This identity is the **exact raw tree digest** of the mounted source. Every non-Git-metadata file
 below the source belongs to it, including otherwise ignorable build residue;
 undeclared entries are never silently skipped. A subject may separately publish
 its own declared payload identity for its distributable files. That declaration
@@ -150,7 +164,7 @@ index and cached diff stay untouched.
 
 ## Retention and declared review material
 
-The attempt directory always keeps the content-light receipt plus sealed
+After an invoked, quiescent target, the attempt directory keeps the content-light receipt plus sealed
 artifacts (`case.json`, `prompt.md`, `trace.jsonl`, `stderr.log`,
 `final-output.md`, `diff.patch`, `verification.json`, `metadata.json`, and any
 `verifier-diff-<index>.patch`).

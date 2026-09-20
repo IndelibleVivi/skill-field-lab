@@ -126,7 +126,7 @@ The normative record delta is in
 
 ## Case and evidence model
 
-- **PS-16 — A case is an optional synthetic probe.** It records activation as
+- **PS-16 — A case is an optional synthetic probe.** It records a declared activation scenario as
   `implicit`, `explicit`, or `direct` and may verify the final agent response,
   workspace, bounded commands, raw trace, and declared human-review needs.
 - **PS-17 — Final agent response is a first-class artifact.** Deterministic
@@ -145,7 +145,9 @@ The normative record delta is in
   (`isolated-control`, `workspace-scoped`, `hermetic`) and
   `verification_methods[]`. `hermetic` remains reserved.
 - **PS-21 — Attempt outcomes are bounded.** Sealed attempts use `pass`, `fail`,
-  `error`, `timeout`, `termination-failure`, or `inconclusive`. Claim-facing
+  `error`, `timeout`, `termination-failure`, or `inconclusive`. The 0.2.1
+  amendment adds pre-invocation `input-drift` and `preflight-failed` receipts
+  with zero target calls and no worker/process result. Claim-facing
   observed assessments such as `supported` are recorded separately and map to
   an execution-neutral receipt outcome.
 
@@ -157,7 +159,10 @@ The following v0.1 behavior is protected and must remain regression-covered:
   candidate rationale, and evaluator advice never enter target-worker context.
 - **PS-23** — Planning starts no target model and pins manifest, prompt, case,
   fixture, subject source, Field Lab source, and available adapter executable
-  identity. Drift before live execution fails closed.
+  identity. Drift before live execution fails closed. The 0.2.1 amendment also
+  verifies the actual subject mount before every attempt against this plan;
+  local Git subjects materialize the planned resolved commit, never a later
+  resolution of the requested ref. A failed check stops the remaining matrix.
 - **PS-24** — Live execution requires a saved plan, `--live`, and
   `--max-invocations N`; no retry, baseline, repeat, case, or full suite is
   implicit.
@@ -271,3 +276,25 @@ The following v0.1 behavior is protected and must remain regression-covered:
   requirements, duplicate receipt locations, legacy-ambiguous boundaries,
   missing or digest-drifted artifacts, and next evidence gap without modifying
   the lab.
+
+## 0.2.1 evidence-provenance amendment (unreleased)
+
+Schema v2 remains active. Per-attempt `subject_delivery` records the mount, source
+kind, expected and actual tree digests, requested ref, materialized Git commit,
+and verified/failed status in metadata, verification, and receipts. A control's
+verified delivery means no Field Lab overlay; its mount/digests are null. This
+says nothing about ambient host instructions. Missing delivery on historical
+receipts means unknown, not retrospectively verified.
+
+`activation` remains a declared case scenario. Host selection is unknown without
+structured host evidence, and content application requires semantic review.
+Canonical trace output is `command_reference_mentions`; its assertion is
+`command_reference_mentions_include`. The deprecated `reference_reads_include`
+assertion remains compatible with command-path-mention semantics only; specifying
+both keys asserts their union. No shell parsing or inferred read/selection occurs.
+
+Selftest reports per-case `deterministic_oracle_status`, `exercised_surfaces`,
+`unexercised_surfaces`, and `target_agent_invocations: 0`. Only present workspace
+and command assertions are exercised when an expected overlay exists; result,
+trace, and human review are not. The former `oracle_status` remains a compatible
+alias, with no stronger meaning. No new live acceptance is part of this amendment.

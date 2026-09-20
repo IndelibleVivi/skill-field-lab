@@ -1,4 +1,36 @@
-# Skill Field Lab v0.2 bundle report
+# Skill Field Lab 0.2.1 candidate bundle report
+
+Date: 2026-09-20. Source version: 0.2.1; schema v2 remains active.
+Status: unreleased source candidate. No candidate installation, tag, Release,
+controller activation, or live target-model acceptance is claimed.
+
+## Candidate changes and evidence ceiling
+
+Every attempt checks the exact materialized subject mount against its plan and
+records `subject_delivery` in metadata, verification, and receipt. Git subjects
+use the planned commit. Drift/materialization failures stop before invocation
+and stop the remaining matrix, with no process/worker-final claim. Trace
+references mean command-path mentions only, and selftest discloses its limited
+deterministic surfaces. Current adapter host selection remains unknown; semantic
+application requires review. Historical receipt bytes are unchanged.
+
+Validation: `scripts/check_bundle.py` passed on Python 3.12.13: 83 tests,
+package compilation, and validation/selftest of both bundled examples. Both
+controller Skills passed `skill-validate`; Git whitespace checks passed. The
+bundle manifest now covers all 121 public files, including four source/test
+files omitted by the previous manifest and the new delivery regression file.
+See [TEST_REPORT.txt](TEST_REPORT.txt) for local Python 3.13 startup anomalies
+and unchanged isolated reruns. Target-model invocations for this candidate: 0. LLM-grader invocations: 0. Fake executable runs are deterministic
+regressions, not live target acceptance. Existing Unreleased sealing, bounded
+review material, explain, and requirement-outcome improvements are included.
+
+## Historical v0.2.0 bundle and acceptance (2026-08-30)
+
+The preserved report below describes v0.2.0 only. Its installed/live evidence
+must not be attributed to the 0.2.1 candidate. For current semantics use the
+product, workspace, evidence, and adapter documents.
+
+# Historical Skill Field Lab v0.2 bundle report
 
 Date: 2026-08-30
 

@@ -24,7 +24,6 @@ from .io import (
 from .plan import planned_inputs, validate_plan
 from .receipts import synthetic_receipt
 from .review_material import LIMITS as REVIEW_MATERIAL_LIMITS, seal_review_material
-from .subjects import subject_identity
 from .trace import parse_trace
 from .verify import (
     evaluate_command_assertion,
@@ -35,7 +34,7 @@ from .verify import (
 from .workspace import capture_diff, changed_files, copy_workspace, prepare_workspace
 
 
-TERMINAL_STATES = {"completed", "termination-failed", "evidence-failed"}
+TERMINAL_STATES = {"completed", "termination-failed", "evidence-failed", "input-drift", "preflight-failed"}
 EVIDENCE_ERROR_REASON_LIMIT = 500
 
 
@@ -95,14 +94,7 @@ def _run_identity(
             case_id: case_identity(cases[case_id][0], cases[case_id][1])
             for case_id in plan["cases"]
         },
-        "subjects": {
-            subject_id: subject_identity(
-                subject_id,
-                lab["subjects"][subject_id],
-                lab_root,
-            )
-            for subject_id in plan["subjects"]
-        },
+        "subjects": plan["planned_inputs"]["subjects"],
         "adapter": adapter_identity,
         "execution": {
             key: plan["execution"][key]
@@ -251,6 +243,10 @@ def run_plan(
                 f"{metadata['outcome'].upper()} {subject_id}/{case_id} repeat={repeat} "
                 f"artifacts={attempt_dir}"
             )
+            if metadata["state"] in {"input-drift", "preflight-failed"}:
+                summary["state"] = metadata["state"]
+                atomic_write_json(summary_path, summary)
+                return 1
     except KeyboardInterrupt:
         summary["state"] = "interrupted"
         summary["updated_at"] = utc_now()
@@ -330,13 +326,6 @@ def run_attempt(
     attempt_dir.mkdir(parents=True, exist_ok=False)
     workspace = attempt_dir / "workspace"
     subject = lab["subjects"][subject_id]
-    prepare_workspace(
-        case_dir=case_dir,
-        subject=subject,
-        lab_root=lab_root,
-        subject_id=subject_id,
-        workspace=workspace,
-    )
     prompt = (case_dir / case["prompt_file"]).read_text(encoding="utf-8").strip()
     atomic_write_text(attempt_dir / "prompt.md", prompt + "\n")
     atomic_write_json(attempt_dir / "case.json", case)
@@ -359,6 +348,10 @@ def run_attempt(
         "inputs": input_identity,
         "execution": execution,
         "process": None,
+        "target_agent_invocations": 0,
+        "declared_activation": case["activation"],
+        "host_selection": {"status": "unknown"},
+        "content_application": {"status": "requires-semantic-review"},
         "artifacts": {
             "trace": "trace.jsonl",
             "stderr": "stderr.log",
@@ -368,6 +361,67 @@ def run_attempt(
             "receipt": "receipt.json",
         },
     }
+    atomic_write_json(attempt_dir / "metadata.json", metadata)
+
+    expected_subject = plan["planned_inputs"]["subjects"][subject_id]
+    try:
+        delivery = prepare_workspace(
+            case_dir=case_dir,
+            subject=subject,
+            lab_root=lab_root,
+            subject_id=subject_id,
+            workspace=workspace,
+            expected_subject=expected_subject,
+        )
+        preflight_state = "input-drift" if delivery["status"] != "verified" else None
+    except (ConfigError, ExecutionError, OSError) as exc:
+        source = expected_subject["source"]
+        delivery = {
+            "mount": expected_subject["mount"],
+            "source_type": source["type"],
+            "expected_tree_sha256": source.get("tree_sha256"),
+            "actual_tree_sha256": None,
+            "requested_ref": source.get("requested_ref"),
+            "resolved_commit": None,
+            "status": "failed",
+        }
+        metadata["error"] = str(exc)[:EVIDENCE_ERROR_REASON_LIMIT]
+        preflight_state = "preflight-failed"
+    metadata["subject_delivery"] = delivery
+    if preflight_state:
+        metadata.update(state=preflight_state, outcome=preflight_state, updated_at=utc_now())
+        metadata["artifacts"] = {
+            "verification": "verification.json",
+            "receipt": "receipt.json",
+        }
+        verification = {
+            "schema_version": 2,
+            "passed": False,
+            "worker_completion_supported": False,
+            "subject_delivery": delivery,
+            "target_agent_invocations": 0,
+            "declared_activation": case["activation"],
+            "host_selection": metadata["host_selection"],
+            "content_application": metadata["content_application"],
+            "human_review_requirements": list(case.get("human_review_requirements", [])),
+        }
+        atomic_write_json(attempt_dir / "metadata.json", metadata)
+        atomic_write_json(attempt_dir / "verification.json", verification)
+        receipt = synthetic_receipt(
+            run_id=plan["run_id"], attempt_id=attempt_id, lab_id=lab["lab_id"],
+            case_id=case_id, claim_ids=list(case.get("claim_ids", [])),
+            subject_id=subject_id, subject=subject, mode=plan["mode"],
+            comparison_capable=plan["comparison_capable"],
+            identity_sha256=identity["identity_sha256"], input_identity=input_identity,
+            execution=execution, process=None, outcome=preflight_state,
+            verification=verification, attempt_dir=attempt_dir,
+        )
+        atomic_write_json(attempt_dir / "receipt.json", receipt)
+        if not plan["execution"]["keep_workspace"]:
+            shutil.rmtree(workspace, ignore_errors=True)
+        return metadata
+
+    metadata["target_agent_invocations"] = 1
     atomic_write_json(attempt_dir / "metadata.json", metadata)
 
     process_result = adapter.execute(
@@ -511,6 +565,11 @@ def run_attempt(
     all_results = result_results + workspace_results + command_results + trace_results
     verification = {
         "schema_version": 2,
+        "subject_delivery": delivery,
+        "target_agent_invocations": 1,
+        "declared_activation": case["activation"],
+        "host_selection": metadata["host_selection"],
+        "content_application": metadata["content_application"],
         "passed": all(result["passed"] for result in all_results),
         "result_assertions": result_results,
         "workspace_assertions": workspace_results,

@@ -59,7 +59,8 @@ Synthetic attempts seal exactly one of:
 - `fail`;
 - `error`;
 - `timeout`;
-- `termination-failure`; or
+- `termination-failure`;
+- `input-drift` or `preflight-failed` before any target invocation; or
 - `inconclusive`.
 
 Observed claim assessments use `supported`, `not-supported`, or `inconclusive`
@@ -74,7 +75,7 @@ A v2 case can check:
   JSON Schema subset;
 - workspace file content and exact changed-file set;
 - bounded repository-owned commands;
-- raw trace ceilings and required reference reads; and
+- raw trace ceilings and required command-path mentions; and
 - named human-review requirements.
 
 Final response is first-class. A valid case may change no file and have no
@@ -111,7 +112,7 @@ run with the case's declared sandbox and host tools.
 ## Receipt and review boundary
 
 An attempt receipt records identity, subject scope, selection evidence,
-process-quiescence result, verification summary, and content-light artifact
+process-quiescence result when a target ran, verification summary, and content-light artifact
 digests. The raw trace, final output, diff, stderr, and detailed verification
 stay in the attempt directory.
 
@@ -180,9 +181,10 @@ attempt artifacts (`case.json`, `prompt.md`, `trace.jsonl`, `stderr.log`,
 
 Subject identity is the exact raw tree digest of the mounted `local-path`,
 `local-git-ref`, or `snapshot` source. It deliberately keeps exact-tree
-meaning: every file below the source, including otherwise ignorable build
-residue, is part of the digest, and undeclared entries are never silently
-ignored.
+meaning: every non-Git-metadata file below the source, including otherwise
+ignorable build residue, is part of the digest, and undeclared entries are never
+silently ignored. The existing digest excludes `.git` metadata and includes
+relative file paths, bytes, executable markers, and symlink targets.
 
 A subject may separately publish its own declared payload, such as an explicit
 distributable file list with its own digest. That is a subject-owned
@@ -206,3 +208,33 @@ not as a Field Lab subject identity.
   omitted layer must remain `UNKNOWN` or explicitly unverified.
 - Source, committed code, installed bytes, activated discovery, live execution,
   and owner acceptance remain separate evidence gates.
+
+## Delivery, selection, and application (0.2.1 candidate)
+
+Do not substitute one layer for another:
+
+| Surface | What it establishes | What it does not establish |
+| --- | --- | --- |
+| `subject_delivery` | Each materialized mount matches the saved plan, or failed before target invocation | Host Skill selection or semantic use |
+| `host_selection` | Unknown with the current adapter; observed requires structured host evidence | A declared `activation` scenario alone proves nothing about selection |
+| `content_application` | Requires semantic review of actual behavior | A command-path mention is not a content read or method application |
+
+Delivery fields are `mount`, `source_type`, `expected_tree_sha256`,
+`actual_tree_sha256`, `requested_ref`, `resolved_commit`, and `status`. Controls
+verify no Field Lab overlay and carry null mount/digests; they do not certify an
+instruction-free host. Missing historical delivery evidence stays `unknown` in
+`explain`, separately from the legacy worker-final sealing boundary.
+
+The parser reports `command_reference_mentions` extracted from command strings.
+`echo references/worktree.md` is a mention without a content read. Host injection
+can deliver a Skill without any command mention. Assert mentions with
+`command_reference_mentions_include`; `reference_reads_include` remains a
+deprecated v2 alias. When both are present, their union is asserted. The emitted
+assertion result uses the canonical name. Old receipts are never rewritten.
+
+Selftest's `deterministic_oracle_status` concerns known-fail/known-pass fixture
+and overlay consistency only. `exercised_surfaces` lists the present workspace
+and command assertions it evaluated; `unexercised_surfaces` includes result,
+trace, human review, and any unexercised deterministic surface. A case without an
+expected overlay has no exercised surfaces. Every case reports zero target
+invocations. `oracle_status` is a compatibility alias for this limited status.

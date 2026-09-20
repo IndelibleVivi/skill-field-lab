@@ -280,6 +280,14 @@ def command_validate(manifest_path: Path) -> int:
     )
     if records:
         print("Records: " + ", ".join(f"{name}={count}" for name, count in records.items()))
+    for case_id, (_, case) in cases.items():
+        if "reference_reads_include" in case.get("trace_assertions", {}):
+            print(
+                f"WARNING {case_id}: reference_reads_include is deprecated; use "
+                "command_reference_mentions_include. Both assert command-path mentions, "
+                "not content reads or host selection."
+            )
+    print("Activation is a declared scenario; host selection is unobserved.")
     print("Target-agent invocations: 0")
     return 0
 
@@ -294,7 +302,7 @@ def command_list(manifest_path: Path) -> int:
         print(f"  {subject_id}\t{scope}\t{label}")
     print("Cases:")
     for case_id, (_, case) in cases.items():
-        print(f"  {case_id}\tactivation={case['activation']}\t{case['description']}")
+        print(f"  {case_id}\tdeclared_activation={case['activation']}\t{case['description']}")
     print("Target-agent invocations: 0")
     return 0
 
@@ -303,13 +311,17 @@ def command_selftest(manifest_path: Path, case_ids: list[str] | None) -> int:
     result = selftest_lab(manifest_path, case_ids)
     print(f"SELFTEST {result['lab_id']}: {len(result['cases'])} cases checked")
     for case in result["cases"]:
-        if case["oracle_status"] == "not-applicable":
+        if case["deterministic_oracle_status"] == "not-applicable":
             print(f"  {case['case_id']}: no deterministic expected overlay; contract valid")
         else:
             print(
                 f"  {case['case_id']}: fixture failed {case['fixture_failed_assertions']} "
                 f"assertion(s); expected passed {case['expected_assertions_passed']} assertion(s)"
             )
+        print(f"    deterministic_oracle_status={case['deterministic_oracle_status']}")
+        print(f"    exercised_surfaces={case['exercised_surfaces']}")
+        print(f"    unexercised_surfaces={case['unexercised_surfaces']}")
+        print("    target_agent_invocations=0")
     print("Target-agent invocations: 0")
     return 0
 

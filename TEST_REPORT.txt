@@ -1,3 +1,53 @@
+Skill Field Lab 0.2.1 source-candidate verification report
+Date: 2026-09-20
+
+FINAL SUPPORTED-RUNTIME BUNDLE CHECK
+Runtime: Python 3.12.13, macOS arm64; installed standalone interpreter.
+Command: python3.12 scripts/check_bundle.py (its bin directory first on PATH)
+Result: PASS; 83 tests in 33.321s.
+Package compilation and both example validate/selftest flows: PASS.
+Target-model invocations: 0. LLM-grader invocations: 0.
+All target exercises used fake executables.
+
+NEW REGRESSIONS
+- Mutable local-path and snapshot changes between repeats stop at input-drift;
+  the next target is not launched and later matrix entries do not run.
+- Moving local Git ref delivers the planned commit in both attempts.
+- Every matched/control repeat seals its own delivery record in metadata,
+  verification, and receipt; selection stays unknown and application needs review.
+- Unplanned fixture bytes inside the mount prevent the first target call.
+- Materialization error is preflight-failed, not termination failure.
+- Echoed reference paths count only as mentions; context-supplied Skill text
+  does not fabricate a command mention. Deprecated assertion alias remains valid.
+- Historical receipts retain unknown delivery/selection in explain.
+- Selftest exposes result/trace/human surfaces as unexercised, and validate
+  warns about the legacy command-mention alias.
+
+OTHER CHECKS
+Both controller Skills: skill-validate PASS.
+Bundle manifest: 121 entries verified; includes all tracked source files plus
+this candidate's new delivery test, excluding the self-referential manifest.
+Git whitespace: PASS.
+
+LOCAL PYTHON 3.13 OBSERVATIONS
+Two complete macOS Python 3.13.3 runs did not pass. The first failed two existing
+process-isolation startup/descendant assertions; an unchanged isolated run of
+all four process tests passed. The second timed out starting fake-codex --version
+in an existing review-material test (15 seconds); that unchanged test, the
+complete delivery regressions, and explain tests then passed together (15 tests).
+The cause was not established. Production process code, timeout values, and
+assertions were not weakened. The final complete PASS above is specifically the
+Python 3.12.13 run, not a claim of a complete Python 3.13 PASS.
+
+DELIVERY LIMITS
+Unreleased source candidate only. No daily install, tag/Release, live target
+acceptance, new provider, grader, registry, or host-selection instrumentation.
+Git publication and remote CI are separate read-backs from these local checks.
+
+HISTORICAL V0.2.0 EVIDENCE BELOW
+Preserved from 2026-08-30; its installation and live acceptance do not verify
+this candidate. Historical test counts apply only to that historical source.
+
 Skill Field Lab v0.2 verification report
 Date: 2026-08-30
 

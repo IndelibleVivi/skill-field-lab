@@ -231,6 +231,21 @@ def lab_files(root: Path) -> set[str]:
 
 
 class ClaimExplainTests(unittest.TestCase):
+    def test_old_receipt_does_not_acquire_delivery_or_selection_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            manifest = create_lab(root)
+            write_attempt(root, run_id="legacy-delivery", requirement="semantic check",
+                          with_missing_artifact=False)
+            _, output = explain(manifest, "claim-a", as_json=True)
+            entry = json.loads(output)["receipts"][0]
+            self.assertEqual(entry["subject_delivery"], {"status": "unknown"})
+            self.assertEqual(entry["host_selection"], {"status": "unknown"})
+            self.assertEqual(entry["content_application"]["status"], "requires-semantic-review")
+            _, text = explain(manifest, "claim-a", as_json=False)
+            self.assertIn("command-path mentions", text)
+            self.assertIn("subject delivery: {'status': 'unknown'}", text)
+
     def test_explain_derives_from_receipts_and_not_declared_status(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)

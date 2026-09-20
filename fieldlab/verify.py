@@ -341,14 +341,18 @@ def evaluate_trace_assertions(case: dict[str, Any], summary: dict[str, Any]) -> 
                 actual=actual,
             )
         )
-    actual_references = set(summary["reference_reads"])
-    for expected in expectations.get("reference_reads_include", []):
+    actual_references = set(summary["command_reference_mentions"])
+    expected_mentions = dict.fromkeys(
+        expectations.get("command_reference_mentions_include", [])
+        + expectations.get("reference_reads_include", [])
+    )
+    for expected in expected_mentions:
         passed = expected in actual_references
         results.append(
             assertion_result(
-                "reference_reads_include",
+                "command_reference_mentions_include",
                 passed,
-                "required reference observed" if passed else "required reference not observed",
+                "command-path mention observed" if passed else "command-path mention not observed",
                 expected=expected,
                 actual=sorted(actual_references),
             )

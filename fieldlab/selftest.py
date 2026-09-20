@@ -14,6 +14,22 @@ def _failed(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [result for result in results if not result["passed"]]
 
 
+def _coverage(case: dict[str, Any], *, applicable: bool) -> dict[str, Any]:
+    surfaces = [
+        "workspace_assertions", "command_assertions", "result_assertions",
+        "trace_assertions", "human_review_requirements",
+    ]
+    exercised = [
+        name for name in surfaces[:2] if applicable and case.get(name)
+    ]
+    return {
+        "deterministic_oracle_status": "credible" if applicable else "not-applicable",
+        "exercised_surfaces": exercised,
+        "unexercised_surfaces": [name for name in surfaces if name not in exercised],
+        "target_agent_invocations": 0,
+    }
+
+
 def selftest_lab(manifest_path: Path, case_ids: list[str] | None = None) -> dict[str, Any]:
     lab, lab_root, cases_root = load_lab(manifest_path)
     cases = load_cases(cases_root)
@@ -31,6 +47,7 @@ def selftest_lab(manifest_path: Path, case_ids: list[str] | None = None) -> dict
                 results.append(
                     {
                         "case_id": case_id,
+                        **_coverage(case, applicable=False),
                         "oracle_status": "not-applicable",
                         "fixture_failed_assertions": 0,
                         "expected_assertions_passed": 0,
@@ -73,6 +90,7 @@ def selftest_lab(manifest_path: Path, case_ids: list[str] | None = None) -> dict
             results.append(
                 {
                     "case_id": case_id,
+                    **_coverage(case, applicable=True),
                     "oracle_status": "credible",
                     "fixture_failed_assertions": len(_failed(before)),
                     "expected_assertions_passed": len(after),

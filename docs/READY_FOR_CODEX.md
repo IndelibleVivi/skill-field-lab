@@ -1,6 +1,8 @@
 # Source readiness
 
-Status: v0.2.0 release source verified on 2026-08-30.
+Historical status: v0.2.0 release source verified on 2026-08-30. The current
+0.2.1 source candidate and its limits are reported in [BUNDLE_REPORT.md](../BUNDLE_REPORT.md).
+The acceptance below is retained as dated v0.2.0 evidence, not new candidate proof.
 
 The current source is intended to be ready when all of these are freshly true:
 

@@ -1,6 +1,7 @@
 # Packaging and distribution
 
-Status: v0.2.0 release packaging contract.
+Status: latest published packaging is v0.2.0; current source is an unreleased
+0.2.1 candidate. The archive names below describe the published v0.2.0 assets.
 
 The supported local distribution surface is the stdlib-only transactional
 installer:

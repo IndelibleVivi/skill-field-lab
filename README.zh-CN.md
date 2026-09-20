@@ -14,9 +14,27 @@ Skill Field Lab 是一套 local maintainer workbench：用来研究外部 agent 
 Subject 仍由它自己的 repo 独立拥有和使用；Field Lab 不会把 runtime 复制进去、
 替它安装 Skill，也不会让它反过来依赖 Field Lab。
 
-当前 release contract：**0.2.0**。它的 source acceptance 包含一次真实、严格
-capped 的 target-agent canary。本机 installation、Git tag、published assets、
-后续新 task 的 controller discovery 与 owner acceptance 仍是彼此独立的可观察状态。
+最新已发布版本为 **v0.2.0**；本 checkout 是 **0.2.1 source candidate（尚未发布）**。
+当前候选检查与历史 v0.2.0 安装／live 证据分别见 [bundle report](BUNDLE_REPORT.md)。
+本机 installation、Git tag、published assets、controller discovery 与 owner acceptance
+仍是独立的可观察状态。
+
+每个 target attempt 在调用前将实际 subject mount 与 saved plan 的 tree digest 对比；
+Git subject 使用计划里已解析的 commit。交付不一致时，以 `input-drift` 停止后续 matrix，
+该 attempt 的 target calls 为零；materialization 错误归入 `preflight-failed`。
+metadata、verification 和 receipt 都保留 `subject_delivery`，同时区分 host selection
+仍为 unknown、content application 需要 semantic review。每次 repeat 和 matched control
+都经过同一边界。
+
+Trace 输出 `command_reference_mentions`，对应 assertion 为
+`command_reference_mentions_include`；`echo references/example.md` 也会产生 mention，
+不能据此证明读取内容。旧 `reference_reads_include` 是保留的 deprecated v2 assertion
+alias。`activation` 仅声明场景，不证明宿主实际激活了 Skill。
+
+`selftest` 为每个 case 报告 `deterministic_oracle_status`、已执行／未执行 surfaces 与
+零 target invocations。它只在 fixture／expected overlay 上测试已声明的 workspace 和
+command assertions；result、trace assertions 和 human review 仍未执行。旧 `oracle_status`
+保留为 deterministic status 的兼容 alias。
 
 架构图：[简体中文](docs/ARCHITECTURE.zh-CN.md) ·
 [English](docs/ARCHITECTURE.md)。

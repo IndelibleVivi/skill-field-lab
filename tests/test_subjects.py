@@ -88,6 +88,7 @@ class SubjectMaterializationTests(unittest.TestCase):
                 subject=lab["subjects"]["scope"],
                 lab_root=resolved_root,
                 workspace=workspace,
+                expected_identity=identity,
             )
 
             self.assertEqual(identity["subject_scope"], "workspace-scoped")
@@ -146,6 +147,7 @@ class SubjectMaterializationTests(unittest.TestCase):
                 subject=lab["subjects"]["pinned"],
                 lab_root=resolved_root,
                 workspace=workspace,
+                expected_identity=subject_identity("pinned", lab["subjects"]["pinned"], resolved_root),
             )
             self.assertEqual(
                 (workspace / ".agents" / "skills" / "pinned" / "SKILL.md").read_text(),
@@ -164,6 +166,7 @@ class SubjectMaterializationTests(unittest.TestCase):
                 subject=control,
                 lab_root=root,
                 workspace=workspace,
+                expected_identity=identity,
             )
             self.assertEqual(identity["subject_scope"], "isolated-control")
             self.assertFalse((workspace / ".agents").exists())

@@ -21,7 +21,7 @@ WORKSPACE_ASSERTION_TYPES = {
 ASSERTION_TYPES = WORKSPACE_ASSERTION_TYPES | {"command"}
 TRACE_ASSERTION_KEYS = {
     "max_command_executions", "max_plan_updates", "max_subagent_events",
-    "reference_reads_include",
+    "reference_reads_include", "command_reference_mentions_include",
 }
 RESULT_ASSERTION_KEYS = {
     "text_contains", "text_not_contains", "text_matches", "json_schema",
@@ -124,6 +124,10 @@ def _validate_trace_assertions(trace: object, label: str) -> dict[str, Any]:
         if value is not None and (not isinstance(value, int) or value < 0):
             raise ConfigError(f"{label}: {key} must be a non-negative integer")
     _validate_string_list(trace.get("reference_reads_include", []), f"{label}: reference_reads_include")
+    _validate_string_list(
+        trace.get("command_reference_mentions_include", []),
+        f"{label}: command_reference_mentions_include",
+    )
     return trace
 
 

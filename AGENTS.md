@@ -43,7 +43,10 @@ Do not weaken these contracts:
   case, prompt, fixture, subject, Field Lab source, and available executable;
 - live execution requires a saved plan, `--live`, and
   `--max-invocations N`; no retry, control, repeat, grader, or suite is implicit;
-- post-plan drift fails closed;
+- post-plan drift fails closed; each attempt independently compares the actual
+  subject mount with the plan digest, and Git materialization uses the planned
+  resolved commit. Delivery mismatch/materialization failure stops the matrix
+  before invocation as `input-drift`/`preflight-failed`, never termination failure;
 - requested model and effort remain caller-selection evidence;
 - target and verifier commands reuse the dedicated POSIX process-group helper;
 - a parent exit is insufficient: seal only after group quiescence; and
@@ -79,6 +82,13 @@ alone owns the final disposition. Existing evidence may bind directly to a
 claim. Final response is a first-class assertion surface. Fixture and expected
 overlays are optional. Execution receipts are immutable; later human judgment
 is a separate review bound to the receipt digest.
+
+`subject_delivery`, actual host selection, and semantic content application are
+independent evidence. The current adapter has no structured Skill-selection event:
+report unknown, and treat case activation as declared. Trace reference mentions
+are command-path evidence only. Keep `reference_reads_include` as a deprecated
+schema-v2 alias; do not restore a read claim or add shell/syscall heuristics.
+Selftest exercises only workspace/command oracles, with zero target invocations.
 
 Keep origin, subject scope, comparison, verification methods, and independence
 separate. `hermetic` is reserved. Never infer exclusive causation from a

@@ -151,7 +151,10 @@ The runner preserves the v0.1 execution kernel:
 1. `plan` starts no target model and enumerates every invocation.
 2. `run` requires a saved plan, `--live`, and `--max-invocations`.
 3. Manifest, case, prompt, fixture, subject, Field Lab source, and available
-   executable identity are re-pinned immediately before execution.
+   executable identity are re-pinned immediately before execution. Each attempt
+   also verifies the actual subject mount against the plan, with Git materialization
+   pinned to the planned commit. Delivery failures stop before target invocation;
+   their receipts contain no worker-final or process-quiescence claim.
 4. Target and command-verifier processes use dedicated POSIX process groups.
 5. Timeout, interrupt, parent-exit-with-child, and cleanup failure all converge
    on bounded group termination.

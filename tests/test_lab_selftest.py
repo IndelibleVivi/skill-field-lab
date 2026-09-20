@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 import json
+import io
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
+from contextlib import redirect_stdout
 
+from fieldlab.cli import command_validate
 from fieldlab.selftest import selftest_lab
 
 
@@ -18,6 +22,46 @@ class LabSelftestTests(unittest.TestCase):
         self.assertEqual(demo["target_agent_invocations"], 0)
         self.assertEqual(demo["cases"][0]["oracle_status"], "credible")
         self.assertEqual(legal["cases"][0]["oracle_status"], "not-applicable")
+        self.assertEqual(demo["cases"][0]["deterministic_oracle_status"], "credible")
+        self.assertEqual(demo["cases"][0]["exercised_surfaces"], ["workspace_assertions", "command_assertions"])
+        self.assertEqual(demo["cases"][0]["unexercised_surfaces"], [
+            "result_assertions", "trace_assertions", "human_review_requirements",
+        ])
+        self.assertEqual(legal["cases"][0]["exercised_surfaces"], [])
+        self.assertEqual(len(legal["cases"][0]["unexercised_surfaces"]), 5)
+        self.assertEqual(legal["cases"][0]["target_agent_invocations"], 0)
+
+    def test_selftest_does_not_claim_result_trace_or_human_evaluation(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw) / "lab"
+            shutil.copytree(ROOT / "examples" / "demo", root)
+            path = root / "cases" / "tiny-copy" / "case.json"
+            case = json.loads(path.read_text())
+            case["result_assertions"] = {"text_contains": ["no target will produce this"]}
+            case["trace_assertions"] = {"command_reference_mentions_include": ["unread.md"]}
+            case["human_review_requirements"] = ["requires actual semantic review"]
+            path.write_text(json.dumps(case))
+            result = selftest_lab(root / "fieldlab.json")["cases"][0]
+        self.assertEqual(result["deterministic_oracle_status"], "credible")
+        self.assertEqual(result["target_agent_invocations"], 0)
+        self.assertEqual(result["unexercised_surfaces"], [
+            "result_assertions", "trace_assertions", "human_review_requirements",
+        ])
+
+    def test_validate_accepts_and_warns_about_legacy_mention_alias(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw) / "lab"
+            shutil.copytree(ROOT / "examples" / "demo", root)
+            path = root / "cases" / "tiny-copy" / "case.json"
+            case = json.loads(path.read_text())
+            case["trace_assertions"]["reference_reads_include"] = ["worktree.md"]
+            case["trace_assertions"]["command_reference_mentions_include"] = ["other.md"]
+            path.write_text(json.dumps(case))
+            output = io.StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(command_validate(root / "fieldlab.json"), 0)
+        self.assertIn("deprecated", output.getvalue())
+        self.assertIn("command-path mentions", output.getvalue())
 
     def test_case_without_expected_overlay_remains_a_valid_lab_case(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

@@ -16,7 +16,8 @@ from .subjects import declared_subject_scope
 
 
 ATTEMPT_OUTCOMES = {
-    "pass", "fail", "error", "timeout", "termination-failure", "inconclusive"
+    "pass", "fail", "error", "timeout", "termination-failure", "inconclusive",
+    "input-drift", "preflight-failed",
 }
 CLAIM_ASSESSMENTS = {"supported", "not-supported", "inconclusive"}
 REVIEW_INDEPENDENCE = {"implementer-run", "separate-agent", "external-reviewer"}
@@ -71,7 +72,7 @@ def synthetic_receipt(
     identity_sha256: str,
     input_identity: dict[str, Any],
     execution: dict[str, Any],
-    process: dict[str, Any],
+    process: dict[str, Any] | None,
     outcome: str,
     verification: dict[str, Any],
     attempt_dir: Path,
@@ -90,6 +91,11 @@ def synthetic_receipt(
         "case_id": case_id,
         "claim_ids": claim_ids,
         "subject_id": subject_id,
+        "subject_delivery": verification.get("subject_delivery", {"status": "unknown"}),
+        "declared_activation": verification.get("declared_activation"),
+        "host_selection": {"status": "unknown"},
+        "content_application": {"status": "requires-semantic-review"},
+        "target_agent_invocations": 0 if process is None else 1,
         "evidence": {
             "origin": "synthetic",
             "subject_scope": subject_scope,
@@ -111,11 +117,12 @@ def synthetic_receipt(
             "sandbox": execution["sandbox"],
             "approval_policy": execution["approval_policy"],
             "network_access": execution["network_access"],
-            "user_home_isolated": True,
-            "user_config_ignored": True,
-            "quiescent": process["quiescent"],
-            "termination_reason": process["termination_reason"],
-            "orphan_descendants": process["orphan_descendants"],
+            "target_started": process is not None,
+            "user_home_isolated": True if process is not None else None,
+            "user_config_ignored": True if process is not None else None,
+            "quiescent": process["quiescent"] if process is not None else None,
+            "termination_reason": process["termination_reason"] if process is not None else None,
+            "orphan_descendants": process["orphan_descendants"] if process is not None else None,
         },
         "outcome": outcome,
         "verification_summary": {

@@ -22,7 +22,7 @@ Use the evidence vocabulary in `references/evidence-model.md`.
 
 ## Validate the case before spending
 
-Use `fieldlab validate` for contracts and `fieldlab selftest` when the case carries an `expected/` deterministic oracle. The unresolved fixture must fail and the expected overlay must pass. Output-only and human-review cases may omit both `fixture/` and `expected/`. These checks may run repository-owned command assertions but start no target model.
+Use `fieldlab validate` for contracts and `fieldlab selftest` when the case carries an `expected/` deterministic oracle. The unresolved fixture must fail and the expected overlay must pass. Output-only and human-review cases may omit both `fixture/` and `expected/`. These checks may run repository-owned command assertions but start no target model. Report the per-case deterministic oracle status and exercised/unexercised surfaces; selftest does not evaluate result assertions, trace assertions, or human review.
 
 ## Plan before running
 

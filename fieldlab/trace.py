@@ -17,7 +17,7 @@ def parse_trace(trace_path: Path) -> dict[str, Any]:
     plan_ids: set[str] = set()
     subagent_ids: set[str] = set()
     command_texts: list[str] = []
-    reference_reads: set[str] = set()
+    command_reference_mentions: set[str] = set()
     final_messages: list[str] = []
     errors: list[str] = []
     malformed_lines = 0
@@ -45,7 +45,7 @@ def parse_trace(trace_path: Path) -> dict[str, Any]:
             "commands": [],
             "plan_updates": 0,
             "subagent_events": 0,
-            "reference_reads": [],
+            "command_reference_mentions": [],
             "final_message": "",
             "usage": None,
             "errors": ["trace file missing"],
@@ -95,7 +95,7 @@ def parse_trace(trace_path: Path) -> dict[str, Any]:
             command = item.get("command")
             if isinstance(command, str) and command not in command_texts:
                 command_texts.append(command)
-                reference_reads.update(REFERENCE_RE.findall(command))
+                command_reference_mentions.update(REFERENCE_RE.findall(command))
         if "plan" in item_type or item_type == "todo_list":
             plan_ids.add(item_id)
         if any(marker in item_type for marker in ("subagent", "collab")):
@@ -118,7 +118,7 @@ def parse_trace(trace_path: Path) -> dict[str, Any]:
         "commands": command_texts,
         "plan_updates": len(plan_ids),
         "subagent_events": len(subagent_ids),
-        "reference_reads": sorted(reference_reads),
+        "command_reference_mentions": sorted(command_reference_mentions),
         "final_message": final_messages[-1] if final_messages else "",
         "usage": usage,
         "errors": errors,

@@ -137,6 +137,8 @@ def _artifact_report(receipt_path: Path, receipt: dict[str, Any]) -> dict[str, A
 
 
 def _boundary(receipt: dict[str, Any]) -> str | None:
+    if receipt.get("outcome") in {"input-drift", "preflight-failed"}:
+        return "pre-invocation"
     if receipt.get("receipt_type") != "attempt":
         return None
     summary = receipt.get("verification_summary")
@@ -276,6 +278,12 @@ def _receipt_view(
         "identity_sha256": receipt.get("identity_sha256"),
         "inputs": receipt.get("inputs"),
         "subject_identity": subject,
+        "subject_delivery": receipt.get("subject_delivery", {"status": "unknown"}),
+        "trace_evidence_semantics": "command-path mentions only; reference_reads_include is a deprecated alias",
+        "host_selection": receipt.get("host_selection", {"status": "unknown"}),
+        "content_application": receipt.get(
+            "content_application", {"status": "requires-semantic-review"}
+        ),
         "payload_identity": payload_identity,
         "worker_final": summary.get("worker_final"),
         "review_material": summary.get("review_material"),
@@ -537,6 +545,8 @@ def render_explanation(view: dict[str, Any]) -> str:
         f"Claim: {view['claim_id']} (declared status: {view['declared_status']})",
         f"Subject: {view['subject_id']}",
         f"Statement: {view['statement']}",
+        "Trace references are command-path mentions, not proof of content reads. "
+        "reference_reads_include is a deprecated alias for command_reference_mentions_include.",
         "",
         "Derived evidence view (from receipts and reviews, not claim.status):",
         f"  verdict: {view['derived_verdict']}",
@@ -567,8 +577,13 @@ def render_explanation(view: dict[str, Any]) -> str:
                 "     boundary: legacy-ambiguous (no worker-final boundary marker; "
                 "not proven sealed before verifier)"
             )
+        elif entry["boundary"] == "pre-invocation":
+            lines.append("     boundary: pre-invocation (target was not started)")
         elif entry["boundary"]:
             lines.append("     boundary: sealed-before-verifier")
+        lines.append(f"     subject delivery: {entry['subject_delivery']}")
+        lines.append(f"     host selection: {entry['host_selection']}")
+        lines.append(f"     content application: {entry['content_application']}")
         if len(entry["locations"]) > 1:
             lines.append(f"     locations: {entry['locations']}")
         if entry["subject_identity"]:

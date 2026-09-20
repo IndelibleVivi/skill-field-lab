@@ -33,3 +33,10 @@ requested selection evidence unless raw provider events establish more.
 Any future adapter must reuse or strengthen plan drift checks, spend gates,
 worker/controller separation, and process quiescence. It cannot weaken those
 contracts merely because another provider exposes a different CLI.
+
+The runner verifies planned subject delivery before calling the adapter for each
+attempt. The current adapter does not consume case `activation` as a selection
+instruction and supplies no structured Skill-selection event. It records host
+selection as unknown. Command-path mentions in its trace are not evidence of
+content reads; semantic application requires separate review. A delivery failure
+produces only pre-invocation evidence, not an adapter/process result.

@@ -17,7 +17,7 @@
     "case_id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
     "description": {"type": "string", "minLength": 1},
     "prompt_file": {"type": "string", "pattern": "^[^/\\\\]+$"},
-    "activation": {"enum": ["implicit", "explicit", "direct"]},
+    "activation": {"enum": ["implicit", "explicit", "direct"], "description": "Declared activation scenario; not an adapter instruction or observed host selection."},
     "sandbox": {"enum": ["read-only", "workspace-write"]},
     "timeout_seconds": {"type": "integer", "minimum": 1, "maximum": 3600},
     "tags": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
@@ -41,7 +41,8 @@
         "max_command_executions": {"type": "integer", "minimum": 0},
         "max_plan_updates": {"type": "integer", "minimum": 0},
         "max_subagent_events": {"type": "integer", "minimum": 0},
-        "reference_reads_include": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+        "command_reference_mentions_include": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}, "description": "File-name mentions in command text only; not proof of reads, host selection, or application."},
+        "reference_reads_include": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}, "deprecated": true, "description": "Deprecated alias of command_reference_mentions_include, with command-path-mention semantics only."}
       }
     },
     "human_review_requirements": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},

@@ -120,22 +120,40 @@ def materialize_subject(
     subject: dict[str, Any],
     lab_root: Path,
     workspace: Path,
-) -> None:
+    expected_identity: dict[str, Any],
+) -> dict[str, Any]:
+    """Deliver the planned subject and measure the actual mount, not its source."""
+    expected = expected_identity["source"]
+    delivery: dict[str, Any] = {
+        "mount": expected_identity["mount"],
+        "source_type": expected["type"],
+        "expected_tree_sha256": expected.get("tree_sha256"),
+        "actual_tree_sha256": None,
+        "requested_ref": expected.get("requested_ref"),
+        "resolved_commit": None,
+        "status": "verified",
+    }
     if subject.get("kind") == "control":
-        return
-    mount = safe_mount(workspace, subject.get("mount", f".agents/skills/{subject_id}"))
+        # This verifies that Field Lab delivered no overlay, not that the host
+        # selected no ambient instructions.
+        return delivery
+    mount = safe_mount(workspace, expected_identity["mount"])
     source = subject["source"]
     if source["type"] in {"local-path", "snapshot"}:
         copy_tree_source(_source_path(subject, lab_root), mount, "subject source")
-        return
-    repo = resolve_local_path(lab_root, source["repo"])
-    with tempfile.TemporaryDirectory(prefix="fieldlab-subject-materialize-") as raw:
-        staged = Path(raw) / "tree"
-        materialize_git_tree(
-            repo=repo,
-            ref=source["ref"],
-            source_path=source["subpath"],
-            output=staged,
-            replace=False,
-        )
-        copy_tree_source(staged, mount, "subject source")
+    else:
+        with tempfile.TemporaryDirectory(prefix="fieldlab-subject-materialize-") as raw:
+            staged = Path(raw) / "tree"
+            metadata = materialize_git_tree(
+                repo=Path(expected["repo"]),
+                ref=expected["resolved_commit"],
+                source_path=expected["subpath"],
+                output=staged,
+                replace=False,
+            )
+            delivery["resolved_commit"] = metadata["resolved_commit"]
+            copy_tree_source(staged, mount, "subject source")
+    delivery["actual_tree_sha256"] = tree_digest(mount)
+    if delivery["actual_tree_sha256"] != delivery["expected_tree_sha256"]:
+        delivery["status"] = "failed"
+    return delivery

@@ -8,7 +8,7 @@ from pathlib import Path
 
 from .errors import ConfigError, ExecutionError
 from .io import safe_relative
-from .subjects import materialize_subject
+from .subjects import materialize_subject, subject_identity
 from .trees import validate_tree_symlinks
 
 
@@ -45,7 +45,12 @@ def prepare_workspace(
     lab_root: Path,
     subject_id: str = "subject",
     workspace: Path,
-) -> None:
+    expected_subject: dict | None = None,
+) -> dict:
+    if expected_subject is None:
+        if subject.get("kind") != "control":
+            raise ConfigError("subject workspace requires its planned identity")
+        expected_subject = subject_identity(subject_id, subject, lab_root)
     if workspace.exists():
         shutil.rmtree(workspace)
     fixture = case_dir / "fixture"
@@ -54,12 +59,16 @@ def prepare_workspace(
         shutil.copytree(fixture, workspace, symlinks=True)
     else:
         workspace.mkdir(parents=True)
-    materialize_subject(
+    delivery = materialize_subject(
         subject_id=subject_id,
         subject=subject,
         lab_root=lab_root,
         workspace=workspace,
+        expected_identity=expected_subject,
     )
+
+    if delivery["status"] != "verified":
+        return delivery
 
     _run_git(["git", "init", "-q"], workspace)
     _run_git(["git", "config", "user.name", "Skill Field Lab"], workspace)
@@ -69,6 +78,7 @@ def prepare_workspace(
         ["git", "commit", "--allow-empty", "--no-gpg-sign", "-q", "-m", "fieldlab baseline"],
         workspace,
     )
+    return delivery
 
 
 def changed_files(workspace: Path) -> list[str]:

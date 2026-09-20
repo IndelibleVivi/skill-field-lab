@@ -28,7 +28,25 @@
       }
     },
     "claim_assessment": {"enum": ["supported", "not-supported", "inconclusive"]},
-    "outcome": {"enum": ["pass", "fail", "error", "timeout", "termination-failure", "inconclusive"]},
+    "outcome": {"enum": ["pass", "fail", "error", "timeout", "termination-failure", "inconclusive", "input-drift", "preflight-failed"]},
+    "subject_delivery": {
+      "type": "object",
+      "description": "Per-attempt materialized-mount evidence; absent on legacy receipts means unknown.",
+      "required": ["status"],
+      "properties": {
+        "status": {"enum": ["verified", "failed", "unknown"]},
+        "mount": {"type": ["string", "null"]},
+        "source_type": {"enum": ["control", "local-path", "snapshot", "local-git-ref"]},
+        "expected_tree_sha256": {"type": ["string", "null"]},
+        "actual_tree_sha256": {"type": ["string", "null"]},
+        "requested_ref": {"type": ["string", "null"]},
+        "resolved_commit": {"type": ["string", "null"]}
+      }
+    },
+    "declared_activation": {"type": ["string", "null"], "enum": ["implicit", "explicit", "direct", null]},
+    "host_selection": {"type": "object", "properties": {"status": {"enum": ["unknown", "observed"]}}},
+    "content_application": {"type": "object", "properties": {"status": {"const": "requires-semantic-review"}}},
+    "target_agent_invocations": {"type": "integer", "enum": [0, 1]},
     "artifacts": {"type": "object"}
   }
 }
